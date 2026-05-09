@@ -33,6 +33,9 @@ class LoginController extends Controller
         $user = User::where('username', $username)->first();
 
         if (!$user) {
+            // Perform a dummy hash check so the response time is the same whether
+            // the username exists or not — prevents timing-based user enumeration.
+            Hash::check($password, '$2y$12$UH2hwCyB9LSswaPW7o/q3.D.13NQy8auabkTCID4HUR9oZzuQJIyq');
             AuditLog::record(
                 AuditLog::LOGIN_FAILED,
                 ['username_attempted' => $username, 'reason' => 'User not found']
@@ -51,14 +54,15 @@ class LoginController extends Controller
             AuditLog::record(AuditLog::LOGIN_FAILED, ['reason' => 'Account locked'], $user->id, $user->full_name);
             return back()
                 ->withInput($request->only('username'))
-                ->withErrors(['username' => "Account locked. Try again in {$minutesLeft} minute(s)."]);
+                ->withErrors(['username' => "Account temporarily locked. Try again in {$minutesLeft} minute(s)."]);
         }
 
         if ($user->status === 'deactivated') {
+            // Use generic message — specific wording would reveal that the username exists.
             AuditLog::record(AuditLog::LOGIN_FAILED, ['reason' => 'Account deactivated'], $user->id);
             return back()
                 ->withInput($request->only('username'))
-                ->withErrors(['username' => 'This account has been deactivated. Contact your administrator.']);
+                ->withErrors(['username' => 'Invalid credentials. Please try again.']);
         }
 
         if (!Hash::check($password, $user->password)) {

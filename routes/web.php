@@ -31,20 +31,20 @@ Route::middleware('guest')->group(function () {
 
     // Login
     Route::get( '/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:10,1');
 
     // ── Password Recovery (3-step OTP flow) ──────────────────────────────
     // Step 1 — Enter email
     Route::get( '/forgot-password',        [PasswordRecoveryController::class, 'showEmailForm'])->name('password.request');
-    Route::post('/forgot-password',        [PasswordRecoveryController::class, 'sendOtp'])->name('password.email');
+    Route::post('/forgot-password',        [PasswordRecoveryController::class, 'sendOtp'])->name('password.email')->middleware('throttle:5,1');
 
     // Step 2 — Enter OTP
     Route::get( '/forgot-password/verify', [PasswordRecoveryController::class, 'showVerifyForm'])->name('password.verify-otp');
-    Route::post('/forgot-password/verify', [PasswordRecoveryController::class, 'verifyOtp'])->name('password.verify-otp.submit');
+    Route::post('/forgot-password/verify', [PasswordRecoveryController::class, 'verifyOtp'])->name('password.verify-otp.submit')->middleware('throttle:10,1');
 
     // Step 3 — Set new password
     Route::get( '/forgot-password/reset',  [PasswordRecoveryController::class, 'showResetForm'])->name('password.reset-form');
-    Route::post('/forgot-password/reset',  [PasswordRecoveryController::class, 'resetPassword'])->name('password.do-reset');
+    Route::post('/forgot-password/reset',  [PasswordRecoveryController::class, 'resetPassword'])->name('password.do-reset')->middleware('throttle:5,1');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');

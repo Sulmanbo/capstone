@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\InjectionDefenseMiddleware;
+use App\Http\Middleware\SecurityHeaders;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // ── Global middleware (runs on every request) ──────────────────────
         $middleware->web(append: [
             InjectionDefenseMiddleware::class,
+            SecurityHeaders::class,
         ]);
 
         // ── Route-level aliases ────────────────────────────────────────────
