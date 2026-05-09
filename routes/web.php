@@ -49,6 +49,14 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
+// ── Report Card (authenticated download + public verify) ──────────────────
+Route::get('/report-card/{student}/download', [\App\Http\Controllers\ReportCardController::class, 'download'])
+    ->middleware('auth')
+    ->name('report-card.download');
+
+Route::get('/verify/{token}', [\App\Http\Controllers\ReportCardController::class, 'verify'])
+    ->name('report-card.verify');
+
 // ── Mandatory First-Login Password Reset ──────────────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get( '/password/reset-required', [ForcePasswordResetController::class, 'show'])  ->name('password.force-reset');

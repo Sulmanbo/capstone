@@ -87,7 +87,7 @@
       <div class="enc-card__title">Actions</div>
     </div>
     <div class="enc-card__body" style="display:flex;flex-direction:column;gap:12px;">
-      <a href="javascript:void(0);" class="enc-button enc-button--primary" onclick="alert('Download functionality will be available soon.')">Download PDF</a>
+      <a href="{{ route('report-card.download', auth()->id()) }}" class="enc-button enc-button--primary" target="_blank">Download PDF</a>
       <a href="{{ route('student.dashboard') }}" class="enc-button enc-button--secondary">Back to Dashboard</a>
     </div>
   </div>
