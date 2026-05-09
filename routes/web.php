@@ -77,7 +77,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     // ── Students Management ───────────────────────────────────────────────
     Route::prefix('students')->name('students.')->group(function () {
-        Route::get('/', [StudentController::class, 'index'])->name('index');
+        Route::get('/',          [StudentController::class,       'index'])    ->name('index');
+        Route::get('/import',    [\App\Http\Controllers\Admin\StudentImportController::class, 'showForm'])->name('import');
+        Route::post('/import',   [\App\Http\Controllers\Admin\StudentImportController::class, 'import'])  ->name('import');
+        Route::get('/import/template', function () {
+            $csv = implode("\n", [
+                'first_name,last_name,email,lrn,grade_level,section_name,gender,phone,address',
+                'Juan,Dela Cruz,juan@example.com,123456789012,7,Section A,male,09171234567,Manila',
+                'Maria,Santos,maria@example.com,123456789013,8,Section B,female,,',
+            ]);
+            return response($csv, 200, [
+                'Content-Type'        => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="student_import_template.csv"',
+            ]);
+        })->name('import.template');
     });
 
     // ── Faculty Management ────────────────────────────────────────────────

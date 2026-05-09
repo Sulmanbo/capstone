@@ -17,8 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // ── Global middleware (runs on every request) ──────────────────────
         $middleware->web(append: [
+            SecurityHeaders::class,         // outermost — headers apply to ALL responses
             InjectionDefenseMiddleware::class,
-            SecurityHeaders::class,
         ]);
 
         // ── Route-level aliases ────────────────────────────────────────────

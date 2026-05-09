@@ -25,6 +25,8 @@ class AuditLog extends Model
         'data_payload',
         'source_ip',
         'user_agent',
+        'prev_hash',
+        'row_hash',
     ];
 
     protected $casts = [
@@ -75,20 +77,74 @@ class AuditLog extends Model
         ?string $actorName  = null
     ): void {
         try {
-            $user = auth()->user();
+            $user       = auth()->user();
+            $resolvedId = $userId    ?? $user?->id;
+            $resolvedName = $actorName ?? $user?->full_name ?? 'System';
+            $encodedPayload = $payload ? json_encode($payload) : null;
+            $sourceIp   = Request::ip();
+            $createdAt  = now();
 
-            static::create([
-                'user_id'      => $userId     ?? $user?->id,
-                'actor_name'   => $actorName  ?? $user?->full_name ?? 'System',
-                'action_type'  => $actionType,
-                'data_payload' => $payload ? json_encode($payload) : null,
-                'source_ip'    => Request::ip(),
-                'user_agent'   => Request::userAgent(),
-            ]);
+            // ── Hash chain ─────────────────────────────────────────────────
+            // Lock the table momentarily so concurrent requests don't read
+            // the same "last row" and produce a fork in the chain.
+            \DB::transaction(function () use (
+                $resolvedId, $resolvedName, $actionType,
+                $encodedPayload, $sourceIp, $createdAt
+            ) {
+                $prevHash = \DB::table('audit_logs')
+                    ->lockForUpdate()
+                    ->orderByDesc('id')
+                    ->value('row_hash')
+                    ?? hash('sha256', 'genesis');
+
+                $rowHash = static::computeHash(
+                    prevHash:   $prevHash,
+                    actionType: $actionType,
+                    userId:     $resolvedId,
+                    payload:    $encodedPayload,
+                    sourceIp:   $sourceIp,
+                    createdAt:  $createdAt->timestamp,
+                );
+
+                static::create([
+                    'user_id'      => $resolvedId,
+                    'actor_name'   => $resolvedName,
+                    'action_type'  => $actionType,
+                    'data_payload' => $encodedPayload,
+                    'source_ip'    => $sourceIp,
+                    'user_agent'   => Request::userAgent(),
+                    'prev_hash'    => $prevHash,
+                    'row_hash'     => $rowHash,
+                    'created_at'   => $createdAt,
+                ]);
+            });
         } catch (\Exception $e) {
             // Never let audit logging crash the main request
             \Log::error('AuditLog::record failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Compute the deterministic SHA-256 hash for a single audit row.
+     * The exact same formula is used by AuditVerify for chain validation.
+     */
+    public static function computeHash(
+        string  $prevHash,
+        string  $actionType,
+        ?int    $userId,
+        ?string $payload,
+        ?string $sourceIp,
+        int     $createdAt
+    ): string {
+        $content = implode('::', [
+            $prevHash,
+            $actionType,
+            $userId    ?? 'null',
+            $payload   ?? '',
+            $sourceIp  ?? '',
+            $createdAt,
+        ]);
+        return hash('sha256', $content);
     }
 
     // ── Relationships ──────────────────────────────────────────────────────

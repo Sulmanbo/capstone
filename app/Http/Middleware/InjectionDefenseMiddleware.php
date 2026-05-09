@@ -68,7 +68,7 @@ class InjectionDefenseMiddleware
         '/<\/script>/i',
         '/javascript\s*:/i',
         '/vbscript\s*:/i',
-        '/on(load|click|mouseover|error|focus|blur|submit|change|keyup|keydown)\s*=/i',
+        '/on(load|click|dblclick|mouseover|mouseout|mousemove|error|focus|blur|focusin|focusout|submit|change|keyup|keydown|keypress|input|dragstart|drop|paste|copy|cut|contextmenu|wheel|scroll|resize|hashchange|beforeunload|unload)\s*=/i',
         '/<iframe\b/i',
         '/<object\b/i',
         '/<embed\b/i',
@@ -84,11 +84,24 @@ class InjectionDefenseMiddleware
 
     public function handle(Request $request, Closure $next): Response
     {
-        // Only scan actual user input — exclude Laravel internals
+        // Scan user-supplied text fields
         $inputToScan = $request->except($this->exemptFields);
+        $blocked     = $this->containsMaliciousInput($inputToScan);
 
-        if ($this->containsMaliciousInput($inputToScan)) {
+        // Also scan uploaded file original names for path traversal / null bytes
+        if (!$blocked) {
+            foreach ($request->allFiles() as $file) {
+                $files = is_array($file) ? $file : [$file];
+                foreach ($files as $f) {
+                    if ($f && $this->containsMaliciousInput($f->getClientOriginalName())) {
+                        $blocked = true;
+                        break 2;
+                    }
+                }
+            }
+        }
 
+        if ($blocked) {
             AuditLog::record(
                 AuditLog::INJECTION_BLOCKED,
                 [
@@ -104,7 +117,7 @@ class InjectionDefenseMiddleware
                 'injection',
                 'high',
                 'Injection Attempt Blocked',
-                sprintf(
+                \sprintf(
                     'Forbidden input pattern on [%s %s] from IP %s',
                     $request->method(),
                     $request->path(),
@@ -114,7 +127,11 @@ class InjectionDefenseMiddleware
                 $request->path()
             );
 
-            abort(403, 'Request blocked: forbidden characters detected.');
+            // Return a real response (not abort) so SecurityHeaders middleware
+            // can still apply its headers to this 403 response.
+            return response()->view('errors.403', [
+                'message' => 'Request blocked: forbidden characters detected.',
+            ], 403);
         }
 
         return $next($request);
