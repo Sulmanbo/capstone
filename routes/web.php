@@ -184,6 +184,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/registrar/grades',         [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'grades'])        ->name('registrar.grades');
         Route::get('/registrar/calendar',       [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'calendar'])      ->name('registrar.calendar');
         Route::get('/registrar/announcements',  [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'announcements']) ->name('registrar.announcements');
+
+        // Grade finalization
+        Route::post('/registrar/gradebook/{sectionSubject}/finalize', [App\Http\Controllers\Dashboard\GradebookController::class, 'finalize'])->name('registrar.gradebook.finalize');
     });
 
     // Faculty Dashboard & Pages
@@ -194,6 +197,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/faculty/attendance',     [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'attendance'])  ->name('faculty.attendance');
         Route::get('/faculty/my-schedule',    [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'mySchedule'])  ->name('faculty.my-schedule');
         Route::get('/faculty/announcements',  [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'announcements'])->name('faculty.announcements');
+
+        // Grade entry workflow
+        Route::get( '/faculty/gradebook/{sectionSubject}',              [App\Http\Controllers\Dashboard\GradebookController::class, 'show'])      ->name('faculty.gradebook.show');
+        Route::post('/faculty/gradebook/{sectionSubject}/save-draft',   [App\Http\Controllers\Dashboard\GradebookController::class, 'saveDraft']) ->name('faculty.gradebook.save-draft');
+        Route::post('/faculty/gradebook/{sectionSubject}/submit',       [App\Http\Controllers\Dashboard\GradebookController::class, 'submit'])    ->name('faculty.gradebook.submit');
     });
 
     // Student Dashboard

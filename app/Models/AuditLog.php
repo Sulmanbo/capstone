@@ -47,6 +47,9 @@ class AuditLog extends Model
     const PRIVILEGE_VIOLATION  = 'PRIVILEGE_VIOLATION';
     const EXPORT_REPORT        = 'EXPORT_REPORT';
     const INJECTION_BLOCKED    = 'INJECTION_BLOCKED';
+    const GRADE_DRAFT_SAVED    = 'GRADE_DRAFT_SAVED';
+    const GRADE_SUBMITTED      = 'GRADE_SUBMITTED';
+    const GRADE_FINALIZED      = 'GRADE_FINALIZED';
 
     // ══════════════════════════════════════════════════════════════════════
     // STATIC HELPER — use this everywhere instead of ::create() directly

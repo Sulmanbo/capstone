@@ -7,47 +7,62 @@
 
   <div style="margin-bottom:28px;">
     <h1 style="font-size:1.35rem;font-weight:800;color:#0f172a;margin:0 0 4px;">Gradebook</h1>
-    <p style="font-size:.875rem;color:#94a3b8;margin:0;">Enter and manage grades for your classes each grading period.</p>
+    <p style="font-size:.875rem;color:#94a3b8;margin:0;">Select a class below to enter or review grades for the current grading period.</p>
   </div>
 
-  @if($allSchedules->isNotEmpty())
-  <div style="margin-bottom:20px;">
-    <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#374151;margin-bottom:8px;">Select Class</label>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-      @foreach($allSchedules as $sched)
-      <button style="padding:.45rem 1rem;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:.845rem;font-weight:500;color:#374151;cursor:pointer;">
-        {{ $sched->subject_name }} – {{ $sched->section_name ?? 'No Section' }}
-      </button>
-      @endforeach
-    </div>
+  @if(session('success'))
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:.85rem;color:#166534;">
+    {{ session('success') }}
   </div>
   @endif
 
-  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
-    {{-- Coming soon banner --}}
-    <div style="background:linear-gradient(135deg,#1e3a5f,#2d5fa8);padding:40px 32px;text-align:center;">
-      <div style="width:60px;height:60px;border-radius:18px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:28px;height:28px;color:#fff;">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/>
+  @if($allSchedules->isEmpty())
+  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:48px 32px;text-align:center;">
+    <div style="font-size:1rem;font-weight:700;color:#374151;margin-bottom:8px;">No Classes Assigned</div>
+    <div style="font-size:.875rem;color:#94a3b8;">You have no classes assigned for the active academic year.</div>
+  </div>
+  @else
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+    @foreach($allSchedules as $sched)
+    <a href="{{ route('faculty.gradebook.show', $sched->id) }}"
+       style="display:block;text-decoration:none;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px 22px;transition:box-shadow .15s,border-color .15s;"
+       onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)';this.style.borderColor='#6366f1';"
+       onmouseout="this.style.boxShadow='none';this.style.borderColor='#e5e7eb';">
+
+      {{-- Subject & Section --}}
+      <div style="font-size:.93rem;font-weight:700;color:#0f172a;margin-bottom:4px;line-height:1.3;">
+        {{ $sched->subject_name ?? '—' }}
+      </div>
+      <div style="font-size:.8rem;color:#6366f1;font-weight:600;margin-bottom:12px;">
+        {{ $sched->section_name ?? 'No Section' }}
+      </div>
+
+      {{-- Schedule chip --}}
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+        <span style="font-size:.72rem;background:#f1f5f9;color:#475569;border-radius:6px;padding:3px 8px;font-weight:500;">
+          {{ $sched->days_label }}
+        </span>
+        <span style="font-size:.72rem;background:#f1f5f9;color:#475569;border-radius:6px;padding:3px 8px;font-weight:500;">
+          {{ $sched->time_range }}
+        </span>
+        @if($sched->room)
+        <span style="font-size:.72rem;background:#f1f5f9;color:#475569;border-radius:6px;padding:3px 8px;font-weight:500;">
+          {{ $sched->room }}
+        </span>
+        @endif
+      </div>
+
+      {{-- CTA --}}
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:.78rem;font-weight:600;color:#6366f1;">Enter Grades</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2" style="width:16px;height:16px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
         </svg>
       </div>
-      <div style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:8px;">Gradebook — Coming Soon</div>
-      <div style="font-size:.875rem;color:rgba(255,255,255,.7);max-width:420px;margin:0 auto;line-height:1.6;">
-        The grade entry module is under development. You'll be able to input quarterly grades per student, per subject directly from this page.
-      </div>
-    </div>
-    <div style="padding:24px 32px;background:#f8fafc;">
-      <div style="font-size:.8rem;font-weight:600;color:#374151;margin-bottom:12px;">Planned features:</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        @foreach(['Per-student grade entry by quarter','Automatic average computation','Grade submission & locking','Class performance summary','Export to Excel / PDF','Incomplete grade flagging'] as $feat)
-        <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:#64748b;">
-          <div style="width:6px;height:6px;border-radius:50%;background:#6366f1;flex-shrink:0;"></div>
-          {{ $feat }}
-        </div>
-        @endforeach
-      </div>
-    </div>
+    </a>
+    @endforeach
   </div>
+  @endif
 
 </div>
 @endsection
