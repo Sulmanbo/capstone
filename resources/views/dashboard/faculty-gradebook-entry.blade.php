@@ -202,6 +202,32 @@
         </div>
       </div>
       @endif
+
+      {{-- Unlock request panel (shown only when all grades are locked) --}}
+      @if($anyLocked && !$anyFinalized)
+      <div style="padding:20px 24px;background:#fef2f2;border-top:1px solid #fecaca;">
+        <div style="font-size:.85rem;font-weight:700;color:#991b1b;margin-bottom:10px;">
+          Grades are locked — Request an Unlock
+        </div>
+        <form method="POST" action="{{ route('faculty.gradebook.request-unlock', $ss) }}">
+          @csrf
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            <div style="flex:1;min-width:220px;">
+              <textarea name="reason" rows="2" required minlength="10" maxlength="1000"
+                        placeholder="Explain why you need to edit these grades..."
+                        style="width:100%;padding:8px 10px;border:1px solid #fca5a5;border-radius:8px;font-size:.83rem;resize:vertical;box-sizing:border-box;">{{ old('reason') }}</textarea>
+              @error('reason')
+              <div style="font-size:.75rem;color:#dc2626;margin-top:4px;">{{ $message }}</div>
+              @enderror
+            </div>
+            <button type="submit"
+                    style="padding:.5rem 1.1rem;background:#dc2626;color:#fff;border:none;border-radius:9px;font-size:.83rem;font-weight:700;cursor:pointer;white-space:nowrap;">
+              Submit Unlock Request
+            </button>
+          </div>
+        </form>
+      </div>
+      @endif
     </div>
   </form>
 

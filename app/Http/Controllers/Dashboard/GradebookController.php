@@ -8,6 +8,7 @@ use App\Models\AuditLog;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\GradingQuarter;
+use App\Models\GradeUnlockRequest;
 use App\Models\SectionSubject;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -188,5 +189,45 @@ class GradebookController extends Controller
 
         return redirect()->back()
             ->with('success', "{$submittedGrades->count()} grade(s) finalized.");
+    }
+
+    public function requestUnlock(Request $request, SectionSubject $sectionSubject): RedirectResponse
+    {
+        $ss = $sectionSubject->load(['section', 'subject']);
+        $this->assertFacultyOwns($ss);
+
+        $quarter = $this->activeQuarter();
+        abort_unless($quarter, 422, 'No active grading quarter.');
+
+        $request->validate([
+            'reason' => 'required|string|min:10|max:1000',
+        ]);
+
+        // Prevent duplicate pending requests for the same section+quarter
+        $alreadyPending = GradeUnlockRequest::where('section_subject_id', $ss->id)
+            ->where('grading_quarter_id', $quarter->id)
+            ->pending()
+            ->exists();
+
+        if ($alreadyPending) {
+            return redirect()->route('faculty.gradebook.show', $sectionSubject)
+                ->with('error', 'You already have a pending unlock request for this class.');
+        }
+
+        GradeUnlockRequest::create([
+            'section_subject_id' => $ss->id,
+            'grading_quarter_id' => $quarter->id,
+            'requested_by'       => auth()->id(),
+            'reason'             => $request->input('reason'),
+            'status'             => 'pending',
+        ]);
+
+        AuditLog::record(AuditLog::GRADE_UNLOCK_REQUESTED, [
+            'section_subject_id' => $ss->id,
+            'quarter_id'         => $quarter->id,
+        ]);
+
+        return redirect()->route('faculty.gradebook.show', $sectionSubject)
+            ->with('success', 'Unlock request submitted. The registrar will review it shortly.');
     }
 }

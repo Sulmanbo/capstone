@@ -187,6 +187,13 @@ Route::middleware(['auth'])->group(function () {
 
         // Grade finalization
         Route::post('/registrar/gradebook/{sectionSubject}/finalize', [App\Http\Controllers\Dashboard\GradebookController::class, 'finalize'])->name('registrar.gradebook.finalize');
+
+        // Grade lock management
+        Route::get( '/registrar/grade-lock',                                       [App\Http\Controllers\Admin\GradeLockController::class, 'index'])         ->name('registrar.grade-lock.index');
+        Route::post('/registrar/grade-lock/{sectionSubject}/lock',                 [App\Http\Controllers\Admin\GradeLockController::class, 'lockSection'])   ->name('registrar.grade-lock.lock-section');
+        Route::post('/registrar/grade-lock/lock-all',                              [App\Http\Controllers\Admin\GradeLockController::class, 'lockAll'])        ->name('registrar.grade-lock.lock-all');
+        Route::post('/registrar/grade-lock/unlock-requests/{unlockRequest}/approve', [App\Http\Controllers\Admin\GradeLockController::class, 'approveUnlock'])->name('registrar.grade-lock.approve');
+        Route::post('/registrar/grade-lock/unlock-requests/{unlockRequest}/deny',    [App\Http\Controllers\Admin\GradeLockController::class, 'denyUnlock'])   ->name('registrar.grade-lock.deny');
     });
 
     // Faculty Dashboard & Pages
@@ -199,9 +206,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/faculty/announcements',  [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'announcements'])->name('faculty.announcements');
 
         // Grade entry workflow
-        Route::get( '/faculty/gradebook/{sectionSubject}',              [App\Http\Controllers\Dashboard\GradebookController::class, 'show'])      ->name('faculty.gradebook.show');
-        Route::post('/faculty/gradebook/{sectionSubject}/save-draft',   [App\Http\Controllers\Dashboard\GradebookController::class, 'saveDraft']) ->name('faculty.gradebook.save-draft');
-        Route::post('/faculty/gradebook/{sectionSubject}/submit',       [App\Http\Controllers\Dashboard\GradebookController::class, 'submit'])    ->name('faculty.gradebook.submit');
+        Route::get( '/faculty/gradebook/{sectionSubject}',                     [App\Http\Controllers\Dashboard\GradebookController::class, 'show'])          ->name('faculty.gradebook.show');
+        Route::post('/faculty/gradebook/{sectionSubject}/save-draft',          [App\Http\Controllers\Dashboard\GradebookController::class, 'saveDraft'])      ->name('faculty.gradebook.save-draft');
+        Route::post('/faculty/gradebook/{sectionSubject}/submit',              [App\Http\Controllers\Dashboard\GradebookController::class, 'submit'])         ->name('faculty.gradebook.submit');
+        Route::post('/faculty/gradebook/{sectionSubject}/request-unlock',      [App\Http\Controllers\Dashboard\GradebookController::class, 'requestUnlock'])  ->name('faculty.gradebook.request-unlock');
     });
 
     // Student Dashboard

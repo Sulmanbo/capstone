@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\GradingQuarter;
+use App\Models\GradeUnlockRequest;
 use App\Models\Subject;
 use App\Models\CurriculumMapping;
 use App\Models\User;
@@ -106,8 +107,8 @@ class RegistrarDashboardController extends Controller
             // Grade Submission Rate
             'grade_submission_rate' => $this->calculateGradeSubmissionRate($activeQuarter),
             
-            // Pending Unlock Requests (placeholder - would need a GradeLock model)
-            'pending_unlocks' => 0,
+            // Pending Unlock Requests
+            'pending_unlocks' => GradeUnlockRequest::pending()->count(),
             
             // Total Active Students
             'total_active_students' => User::where('role_id', '04')  // 04 = Student
