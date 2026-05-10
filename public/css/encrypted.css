@@ -301,7 +301,7 @@ input, select, textarea { font-family: var(--font-body); }
   padding: 0 28px;
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 110;
   box-shadow: var(--shadow-sm);
 }
 
@@ -354,6 +354,8 @@ input, select, textarea { font-family: var(--font-body); }
   color: var(--gray-400);
   transition: all .15s;
   position: relative;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .enc-icon-btn:hover {

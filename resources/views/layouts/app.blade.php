@@ -922,16 +922,17 @@
 
         {{-- Notifications --}}
         @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
-        <a href="{{ route('notifications.index') }}" class="enc-icon-btn" title="Notifications"
-           style="position:relative;text-decoration:none;">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <a href="{{ route('notifications.index') }}" class="enc-icon-btn" title="Notifications">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="2" style="pointer-events:none;">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
           </svg>
           @if($unreadCount > 0)
             <span style="position:absolute;top:-4px;right:-4px;background:#e11d48;color:#fff;
               border-radius:999px;font-size:.6rem;font-weight:800;min-width:16px;height:16px;
-              display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;">
+              display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;
+              pointer-events:none;">
               {{ $unreadCount > 99 ? '99+' : $unreadCount }}
             </span>
           @endif
