@@ -579,6 +579,14 @@
         Attendance
       </a>
 
+      <a href="{{ route('complaints.manage') }}"
+         class="enc-nav-item {{ request()->routeIs('complaints.*') ? 'active' : '' }}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+        </svg>
+        Grade Complaints
+      </a>
+
       <div class="enc-sidebar__section-label" style="margin-top:8px;">Resources</div>
 
       <a href="{{ route('faculty.my-schedule') }}"
@@ -711,6 +719,14 @@
         Academic Calendar
       </a>
 
+      <a href="{{ route('complaints.manage') }}"
+         class="enc-nav-item {{ request()->routeIs('complaints.*') ? 'active' : '' }}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+        </svg>
+        Grade Complaints
+      </a>
+
       <div class="enc-sidebar__section-label" style="margin-top:8px;">Resources</div>
 
       <a href="{{ route('registrar.announcements') }}"
@@ -779,6 +795,22 @@
       </a>
 
       <div class="enc-sidebar__section-label" style="margin-top:8px;">Academics</div>
+
+      <a href="{{ route('admin.applicants.index') }}"
+         class="enc-nav-item {{ request()->routeIs('admin.applicants.*') ? 'active' : '' }}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109z"/>
+        </svg>
+        Applicants
+      </a>
+
+      <a href="{{ route('admin.entrance-tests.index') }}"
+         class="enc-nav-item {{ request()->routeIs('admin.entrance-tests.*') ? 'active' : '' }}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Entrance Tests
+      </a>
 
       <a href="{{ route('admin.users.index') }}"
          class="enc-nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
@@ -889,15 +921,21 @@
         <div class="enc-header__time" id="enc-clock">--:-- --</div>
 
         {{-- Notifications --}}
-        <button class="enc-icon-btn" title="Alerts">
+        @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
+        <a href="{{ route('notifications.index') }}" class="enc-icon-btn" title="Notifications"
+           style="position:relative;text-decoration:none;">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
           </svg>
-          @if(isset($activeThreats) && $activeThreats > 0)
-            <span class="enc-icon-btn__dot"></span>
+          @if($unreadCount > 0)
+            <span style="position:absolute;top:-4px;right:-4px;background:#e11d48;color:#fff;
+              border-radius:999px;font-size:.6rem;font-weight:800;min-width:16px;height:16px;
+              display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;">
+              {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+            </span>
           @endif
-        </button>
+        </a>
 
         {{-- Logout --}}
         <button type="button" class="enc-icon-btn" title="Sign out" onclick="openLogoutModal()">

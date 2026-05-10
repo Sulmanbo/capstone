@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AcademicYearController;
 use App\Http\Controllers\Admin\GradingQuarterController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\CurriculumMappingController;
+use App\Http\Controllers\Admin\EntranceTestController;
 use App\Http\Controllers\Settings\AdminSettingsController;
 use App\Http\Controllers\Settings\StudentSettingsController;
 use App\Http\Controllers\Settings\FacultySettingsController;
@@ -56,6 +57,12 @@ Route::get('/report-card/{student}/download', [\App\Http\Controllers\ReportCardC
 
 Route::get('/verify/{token}', [\App\Http\Controllers\ReportCardController::class, 'verify'])
     ->name('report-card.verify');
+
+// ── Public Applicant Onboarding ───────────────────────────────────────────
+Route::get( '/apply',          [\App\Http\Controllers\ApplicantController::class, 'create'])->name('apply');
+Route::post('/apply',          [\App\Http\Controllers\ApplicantController::class, 'store']) ->name('apply.store')
+    ->middleware('throttle:10,5'); // 10 submissions per 5 minutes per IP
+Route::get( '/apply/thanks/{reference}', [\App\Http\Controllers\ApplicantController::class, 'thanks'])->name('apply.thanks');
 
 // ── Mandatory First-Login Password Reset ──────────────────────────────────
 Route::middleware('auth')->group(function () {
@@ -113,6 +120,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     // ── Registrar Module — Dashboard ──────────────────────────────────────
     Route::get('/registrar-dashboard', [RegistrarDashboardController::class, 'index'])->name('registrar-dashboard');
+
+    // ── Applicant Management ──────────────────────────────────────────────
+    Route::prefix('applicants')->name('applicants.')->group(function () {
+        Route::get('/',               [\App\Http\Controllers\Admin\ApplicantManagementController::class, 'index'])       ->name('index');
+        Route::get('/{applicant}',    [\App\Http\Controllers\Admin\ApplicantManagementController::class, 'show'])        ->name('show');
+        Route::patch('/{applicant}/status', [\App\Http\Controllers\Admin\ApplicantManagementController::class, 'updateStatus'])->name('update-status');
+    });
+
+    // ── Entrance Test Results ─────────────────────────────────────────────
+    Route::prefix('entrance-tests')->name('entrance-tests.')->group(function () {
+        Route::get('/',                     [EntranceTestController::class, 'index'])  ->name('index');
+        Route::get('/{applicant}/record',   [EntranceTestController::class, 'create']) ->name('create');
+        Route::post('/{applicant}/record',  [EntranceTestController::class, 'store'])  ->name('store');
+    });
 
     // ── Academic Years Management ─────────────────────────────────────────
     Route::prefix('academic-years')->name('academic-years.')->group(function () {
@@ -190,6 +211,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::post('/security', [AdminSettingsController::class, 'updateSecurity']) ->name('security');
         Route::post('/password', [AdminSettingsController::class, 'updatePassword']) ->name('password');
     });
+});
+
+// ── Notifications ─────────────────────────────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications',         [\App\Http\Controllers\NotificationController::class, 'index'])   ->name('notifications.index');
+    Route::patch('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('notifications.read');
 });
 
 // ── Role-Specific Dashboard Routes ────────────────────────────────────────
@@ -290,5 +317,18 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/workflow', [RegistrarSettingsController::class, 'updateWorkflow'])   ->name('workflow');
         Route::post('/export',   [RegistrarSettingsController::class, 'updateExport'])     ->name('export');
         Route::post('/password', [RegistrarSettingsController::class, 'updatePassword'])   ->name('password');
+    });
+
+    // ── Grade Complaints ──────────────────────────────────────────────────
+    // Student: submit and list own complaints
+    Route::middleware('role:student')->group(function () {
+        Route::get( '/complaints',        [\App\Http\Controllers\GradeComplaintController::class, 'index'])  ->name('complaints.index');
+        Route::get( '/complaints/create', [\App\Http\Controllers\GradeComplaintController::class, 'create']) ->name('complaints.create');
+        Route::post('/complaints',        [\App\Http\Controllers\GradeComplaintController::class, 'store'])  ->name('complaints.store');
+    });
+    // Faculty / Registrar / Admin: review and respond
+    Route::middleware('role:faculty,registrar,admin')->group(function () {
+        Route::get(  '/complaints/manage',              [\App\Http\Controllers\GradeComplaintController::class, 'manage'])  ->name('complaints.manage');
+        Route::patch('/complaints/{complaint}/respond', [\App\Http\Controllers\GradeComplaintController::class, 'respond']) ->name('complaints.respond');
     });
 });

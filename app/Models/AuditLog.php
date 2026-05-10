@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Request;
 class AuditLog extends Model
 {
     // No updated_at column — logs are immutable
-    const UPDATED_AT = null;
+    public const UPDATED_AT = null;
 
     protected $table = 'audit_logs';
 
@@ -34,29 +34,34 @@ class AuditLog extends Model
     ];
 
     // ── Action Type Constants ──────────────────────────────────────────────
-    const LOGIN_SUCCESS        = 'LOGIN_SUCCESS';
-    const LOGIN_FAILED         = 'LOGIN_FAILED';
-    const LOGOUT               = 'LOGOUT';
-    const ACCOUNT_LOCKED       = 'ACCOUNT_LOCKED';
-    const PASSWORD_RESET       = 'PASSWORD_RESET';
-    const PASSWORD_CHANGED     = 'PASSWORD_CHANGED';
-    const CREATE_USER          = 'CREATE_USER';
-    const UPDATE_USER          = 'UPDATE_USER';
-    const DEACTIVATE_USER      = 'DEACTIVATE_USER';
-    const UPDATE_GRADE         = 'UPDATE_GRADE';
-    const LOCK_SECTION         = 'LOCK_SECTION';
-    const DELETE_RECORD        = 'DELETE_RECORD';
-    const PRIVILEGE_VIOLATION  = 'PRIVILEGE_VIOLATION';
-    const EXPORT_REPORT        = 'EXPORT_REPORT';
-    const INJECTION_BLOCKED    = 'INJECTION_BLOCKED';
-    const GRADE_DRAFT_SAVED      = 'GRADE_DRAFT_SAVED';
-    const GRADE_SUBMITTED        = 'GRADE_SUBMITTED';
-    const GRADE_FINALIZED        = 'GRADE_FINALIZED';
-    const GRADE_LOCKED           = 'GRADE_LOCKED';
-    const GRADE_UNLOCKED         = 'GRADE_UNLOCKED';
-    const GRADE_UNLOCK_REQUESTED = 'GRADE_UNLOCK_REQUESTED';
-    const GRADE_UNLOCK_APPROVED  = 'GRADE_UNLOCK_APPROVED';
-    const GRADE_UNLOCK_DENIED    = 'GRADE_UNLOCK_DENIED';
+    public const LOGIN_SUCCESS             = 'LOGIN_SUCCESS';
+    public const LOGIN_FAILED              = 'LOGIN_FAILED';
+    public const LOGOUT                    = 'LOGOUT';
+    public const ACCOUNT_LOCKED            = 'ACCOUNT_LOCKED';
+    public const PASSWORD_RESET            = 'PASSWORD_RESET';
+    public const PASSWORD_CHANGED          = 'PASSWORD_CHANGED';
+    public const CREATE_USER               = 'CREATE_USER';
+    public const UPDATE_USER               = 'UPDATE_USER';
+    public const DEACTIVATE_USER           = 'DEACTIVATE_USER';
+    public const UPDATE_GRADE              = 'UPDATE_GRADE';
+    public const LOCK_SECTION              = 'LOCK_SECTION';
+    public const DELETE_RECORD             = 'DELETE_RECORD';
+    public const PRIVILEGE_VIOLATION       = 'PRIVILEGE_VIOLATION';
+    public const EXPORT_REPORT             = 'EXPORT_REPORT';
+    public const INJECTION_BLOCKED         = 'INJECTION_BLOCKED';
+    public const GRADE_DRAFT_SAVED         = 'GRADE_DRAFT_SAVED';
+    public const GRADE_SUBMITTED           = 'GRADE_SUBMITTED';
+    public const GRADE_FINALIZED           = 'GRADE_FINALIZED';
+    public const GRADE_LOCKED              = 'GRADE_LOCKED';
+    public const GRADE_UNLOCKED            = 'GRADE_UNLOCKED';
+    public const GRADE_UNLOCK_REQUESTED    = 'GRADE_UNLOCK_REQUESTED';
+    public const GRADE_UNLOCK_APPROVED     = 'GRADE_UNLOCK_APPROVED';
+    public const GRADE_UNLOCK_DENIED       = 'GRADE_UNLOCK_DENIED';
+    public const GRADE_COMPLAINT_SUBMITTED = 'GRADE_COMPLAINT_SUBMITTED';
+    public const GRADE_COMPLAINT_RESPONDED = 'GRADE_COMPLAINT_RESPONDED';
+    public const GRADE_COMPLAINT_DISMISSED = 'GRADE_COMPLAINT_DISMISSED';
+    public const APPLICANT_STATUS_UPDATED  = 'APPLICANT_STATUS_UPDATED';
+    public const ENTRANCE_TEST_RECORDED    = 'ENTRANCE_TEST_RECORDED';
 
     // ══════════════════════════════════════════════════════════════════════
     // STATIC HELPER — use this everywhere instead of ::create() directly

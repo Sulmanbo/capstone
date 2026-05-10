@@ -34,14 +34,17 @@ class CurriculumMapping extends Model
         'academic_year_id',
         'grade_level',
         'subject_id',
+        'prerequisite_subject_id',
+        'prerequisite_min_grade',
         'is_required',
         'sequence_order',
         'status',
     ];
 
     protected $casts = [
-        'is_required' => 'boolean',
-        'sequence_order' => 'integer',
+        'is_required'           => 'boolean',
+        'sequence_order'        => 'integer',
+        'prerequisite_min_grade'=> 'float',
     ];
 
     // ── Unique Constraints ─────────────────────────────────────────────────
@@ -57,6 +60,16 @@ class CurriculumMapping extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class, 'subject_id');
+    }
+
+    public function prerequisiteSubject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class, 'prerequisite_subject_id');
+    }
+
+    public function hasPrerequisite(): bool
+    {
+        return !is_null($this->prerequisite_subject_id);
     }
 
     // ── Scopes ─────────────────────────────────────────────────────────────

@@ -23,15 +23,13 @@ return new class extends Migration
             
             $table->foreignId('academic_year_id')
                   ->constrained('academic_years')
-                  ->onDelete('cascade')
-                  ->index();
+                  ->onDelete('cascade');
             
             $table->string('grade_level'); // e.g., "Grade 7", "Grade 8", "Grade 9", etc.
             
             $table->foreignId('subject_id')
                   ->constrained('subjects')
-                  ->onDelete('cascade')
-                  ->index();
+                  ->onDelete('cascade');
             
             $table->boolean('is_required')->default(true);        // Required or elective
             $table->integer('sequence_order')->default(0);        // Order in curriculum

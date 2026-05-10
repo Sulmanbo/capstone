@@ -1,59 +1,160 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# EncryptEd — Academic Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A secure, role-based academic management system built with Laravel 11 for a Philippine junior high school. It covers the full student lifecycle: admission → enrollment → grading → reporting, with RA 10173 (Data Privacy Act) compliance baked in.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Roles
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Role | Access |
+|---|---|
+| **Admin** | User management, sections, subjects, curriculum, applicants, entrance tests, announcements, audit logs, threat monitoring |
+| **Registrar** | Enrollment, grade finalization, grade locking, unlock request approval, report cards |
+| **Faculty** | Gradebook (draft → submit), attendance, assessments, complaint responses, unlock requests |
+| **Student** | Report card, complaints, notifications, schedule |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Requirements
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- PHP 8.2+
+- MySQL 8.0+ (production) — SQLite in-memory (tests)
+- Composer
+- Node.js + npm (for asset compilation, if needed)
+- XAMPP or equivalent local server
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Local Setup
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+# 1. Clone and install dependencies
+git clone <repo-url> capstonenew
+cd capstonenew
+composer install
 
-### Premium Partners
+# 2. Environment
+cp .env.example .env
+php artisan key:generate
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# 3. Configure .env — minimum required values:
+#    DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+#    APP_KEY (generated above)
+#    MAIL_MAILER, MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD (for email notifications)
 
-## Contributing
+# 4. Migrate
+php artisan migrate
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 5. Seed (creates default admin account)
+php artisan db:seed
 
-## Code of Conduct
+# 6. Serve
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Default admin login after seeding: check `database/seeders/DatabaseSeeder.php` for credentials.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Key Environment Variables
 
-## License
+```dotenv
+APP_NAME="EncryptEd"
+APP_ENV=local
+APP_KEY=             # generated by artisan key:generate
+APP_URL=http://localhost
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=encrypted_db
+DB_USERNAME=root
+DB_PASSWORD=
+
+MAIL_MAILER=smtp
+MAIL_HOST=
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_FROM_ADDRESS="no-reply@encrypted.edu"
+MAIL_FROM_NAME="EncryptEd"
+
+BCRYPT_ROUNDS=12     # set to 4 in phpunit.xml for faster tests
+```
+
+---
+
+## Security Features
+
+### Encryption at Rest (RA 10173)
+PII fields are AES-256 encrypted via `Crypt::encryptString()` before storage:
+
+- **Users**: `email`, `phone`, `address`
+- **Applicants**: `date_of_birth`, `address`, `barangay`, `municipality`, `province`, `parent_guardian_name`, `parent_contact`, `parent_email`
+
+`email_hash` (SHA-256 of the lowercase email) is stored alongside the encrypted email to allow unique lookups without decryption.
+
+### Authentication
+- Username + password login (no email-based login)
+- Bcrypt at cost factor 12
+- Account lockout after 5 failed attempts (configurable cooldown)
+- Force-password-reset flag for new or compromised accounts
+- Session tokens invalidated on logout
+
+### Audit Logging
+Every sensitive action is recorded in `audit_logs` with a SHA-256 hash chain (each entry hashes the previous row's hash). Ten action types are permanently retained and can never be pruned:
+
+`LOGIN_FAILED`, `ACCOUNT_LOCKED`, `PRIVILEGE_VIOLATION`, `INJECTION_BLOCKED`, `CREATE_USER`, `UPDATE_USER`, `DEACTIVATE_USER`, `DELETE_RECORD`, `PASSWORD_RESET`, `PASSWORD_CHANGED`
+
+Prune non-critical logs manually:
+```bash
+php artisan audit:prune --days=365 --dry-run   # preview
+php artisan audit:prune --days=365              # apply
+```
+
+The scheduler runs this automatically every Sunday at 02:00 (requires `php artisan schedule:work` or a system cron).
+
+---
+
+## Grade Workflow
+
+```
+draft → submitted → finalized → locked
+                                  ↓
+                         faculty: request unlock
+                                  ↓
+                    registrar: approve (→ finalized) or deny
+```
+
+Notifications (in-app + email) are sent at each transition to the relevant parties.
+
+---
+
+## Running Tests
+
+Tests use SQLite in-memory. No database setup required.
+
+```bash
+php artisan test --testsuite=Feature
+```
+
+**29 tests, 72 assertions** — all passing.
+
+| Test File | Tests | Coverage |
+|---|---|---|
+| `Auth/LoginTest` | 13 | Login, role redirects, lockout, force-reset, logout |
+| `GradeFlowTest` | 9 | Draft, submit, finalize, lock, unlock request/approve/deny |
+| `ComplaintTest` | 7 | Submission, duplicate prevention, authorization, faculty response |
+
+---
+
+## Scheduler
+
+Add to the server's crontab to enable scheduled jobs:
+
+```
+* * * * * cd /path/to/capstonenew && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Scheduled jobs:
+- `audit:prune --days=365` — every Sunday at 02:00

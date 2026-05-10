@@ -8,6 +8,7 @@ use App\Models\Announcement;
 use App\Models\GradingQuarter;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\PrerequisiteService;
 use Illuminate\Http\Request;
 
 /**
@@ -128,7 +129,36 @@ class RegistrarUserDashboardController extends Controller
     public function enrollment(Request $request)
     {
         $activeAcademicYear = AcademicYear::where('status', 'active')->first();
-        return view('dashboard.registrar-enrollment', compact('activeAcademicYear'));
+
+        // Prerequisite check tool: look up a student by LRN
+        $checkStudent   = null;
+        $checkGrade     = null;
+        $unmetPrereqs   = null;
+
+        if ($request->filled('check_lrn') && $activeAcademicYear) {
+            $checkStudent = User::where('lrn', $request->input('check_lrn'))
+                ->where('role_id', '01')
+                ->first();
+            $checkGrade = $request->input('check_grade_level');
+
+            if ($checkStudent && $checkGrade) {
+                $unmetPrereqs = app(PrerequisiteService::class)
+                    ->getUnmet($checkStudent, $checkGrade, $activeAcademicYear->id);
+            }
+        }
+
+        $standardGradeLevels = [
+            'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
+            'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12',
+        ];
+
+        return view('dashboard.registrar-enrollment', compact(
+            'activeAcademicYear',
+            'checkStudent',
+            'checkGrade',
+            'unmetPrereqs',
+            'standardGradeLevels'
+        ));
     }
 
     public function requests(Request $request)

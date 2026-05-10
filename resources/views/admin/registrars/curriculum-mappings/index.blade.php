@@ -53,6 +53,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Academic Year</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Grade Level</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Subject</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Prerequisite</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
@@ -72,6 +73,16 @@
                         <span class="font-semibold text-gray-900">{{ $mapping->subject->subject_code }}</span>
                         <p class="text-gray-600">{{ $mapping->subject->subject_name }}</p>
                     </div>
+                </td>
+                <td class="px-6 py-4 text-sm">
+                    @if($mapping->prerequisiteSubject)
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                            {{ $mapping->prerequisiteSubject->subject_code }}
+                        </span>
+                        <div class="text-xs text-gray-500 mt-1">min {{ $mapping->prerequisite_min_grade }}</div>
+                    @else
+                        <span class="text-gray-400 text-xs">—</span>
+                    @endif
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $mapping->is_required ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800' }}">

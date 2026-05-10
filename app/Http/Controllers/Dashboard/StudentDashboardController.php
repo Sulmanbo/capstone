@@ -11,6 +11,7 @@ use App\Models\AuditLog;
 use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\SectionSubject;
+use App\Services\PrerequisiteService;
 use Illuminate\Http\Request;
 
 class StudentDashboardController extends Controller
@@ -375,6 +376,27 @@ class StudentDashboardController extends Controller
         $enrollment  = $this->activeEnrollment($user->id);
         $studentInfo = $this->studentInfo($user, $enrollment);
         $holds       = [];
+
+        // Build prerequisite holds for the student's current enrolled grade level
+        if ($enrollment) {
+            $gradeLevel  = $enrollment->section?->grade_level;
+            $yearId      = $enrollment->academic_year_id;
+
+            if ($gradeLevel && $yearId) {
+                $unmet = app(PrerequisiteService::class)->getUnmet($user, $gradeLevel, $yearId);
+
+                foreach ($unmet as $item) {
+                    $holds[] = [
+                        'type'        => 'Prerequisite',
+                        'description' => "'{$item['subject']}' requires passing '{$item['requires']}'"
+                            . ($item['student_grade'] !== null
+                                ? " (your grade: {$item['student_grade']} / required: {$item['min_grade']})"
+                                : " (no grade on record for '{$item['requires']}')"),
+                        'date'        => $enrollment->enrolled_at?->format('M d, Y') ?? 'N/A',
+                    ];
+                }
+            }
+        }
 
         return view('dashboard.student-academic-holds', compact('user', 'studentInfo', 'holds'));
     }

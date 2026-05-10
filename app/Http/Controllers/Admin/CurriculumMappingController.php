@@ -25,7 +25,7 @@ class CurriculumMappingController extends Controller
         $gradeLevel = $request->input('grade_level');
         $status = $request->input('status');
         
-        $query = CurriculumMapping::with(['academicYear', 'subject']);
+        $query = CurriculumMapping::with(['academicYear', 'subject', 'prerequisiteSubject']);
         
         if ($academicYearId) {
             $query->where('academic_year_id', $academicYearId);
@@ -62,17 +62,16 @@ class CurriculumMappingController extends Controller
     {
         $academicYearId = $request->input('academic_year_id');
         $gradeLevel = $request->input('grade_level');
-        
+
         $academicYear = $academicYearId ? AcademicYear::findOrFail($academicYearId) : null;
         $academicYears = AcademicYear::orderBy('year_label', 'desc')->get();
         $subjects = Subject::where('status', 'active')->orderBy('subject_code', 'asc')->get();
-        
-        // Standard grade levels
+
         $standardGradeLevels = [
             'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
             'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'
         ];
-        
+
         return view('admin.registrars.curriculum-mappings.create', compact(
             'academicYear',
             'academicYears',
@@ -88,12 +87,14 @@ class CurriculumMappingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'academic_year_id' => ['required', 'exists:academic_years,id'],
-            'grade_level' => ['required', 'string', 'max:100'],
-            'subject_id' => ['required', 'exists:subjects,id'],
-            'is_required' => ['required', 'boolean'],
-            'sequence_order' => ['nullable', 'integer', 'min:0'],
-            'status' => ['required', 'in:active,inactive'],
+            'academic_year_id'        => ['required', 'exists:academic_years,id'],
+            'grade_level'             => ['required', 'string', 'max:100'],
+            'subject_id'              => ['required', 'exists:subjects,id'],
+            'prerequisite_subject_id' => ['nullable', 'exists:subjects,id', 'different:subject_id'],
+            'prerequisite_min_grade'  => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'is_required'             => ['required', 'boolean'],
+            'sequence_order'          => ['nullable', 'integer', 'min:0'],
+            'status'                  => ['required', 'in:active,inactive'],
         ]);
         
         // Check for duplicate
@@ -108,8 +109,8 @@ class CurriculumMappingController extends Controller
                 ->withErrors(['subject_id' => 'This subject is already assigned to this grade level in this academic year.']);
         }
         
-        $mapping = CurriculumMapping::create($validated);
-        
+        CurriculumMapping::create($validated);
+
         return redirect()
             ->route('admin.curriculum-mappings.index')
             ->with('success', "Curriculum mapping created successfully.");
@@ -120,15 +121,15 @@ class CurriculumMappingController extends Controller
      */
     public function edit(CurriculumMapping $mapping)
     {
-        $mapping->load(['academicYear', 'subject']);
+        $mapping->load(['academicYear', 'subject', 'prerequisiteSubject']);
         $academicYears = AcademicYear::orderBy('year_label', 'desc')->get();
         $subjects = Subject::where('status', 'active')->orderBy('subject_code', 'asc')->get();
-        
+
         $standardGradeLevels = [
             'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
             'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'
         ];
-        
+
         return view('admin.registrars.curriculum-mappings.edit', compact(
             'mapping',
             'academicYears',
@@ -143,12 +144,14 @@ class CurriculumMappingController extends Controller
     public function update(Request $request, CurriculumMapping $mapping)
     {
         $validated = $request->validate([
-            'academic_year_id' => ['required', 'exists:academic_years,id'],
-            'grade_level' => ['required', 'string', 'max:100'],
-            'subject_id' => ['required', 'exists:subjects,id'],
-            'is_required' => ['required', 'boolean'],
-            'sequence_order' => ['nullable', 'integer', 'min:0'],
-            'status' => ['required', 'in:active,inactive'],
+            'academic_year_id'        => ['required', 'exists:academic_years,id'],
+            'grade_level'             => ['required', 'string', 'max:100'],
+            'subject_id'              => ['required', 'exists:subjects,id'],
+            'prerequisite_subject_id' => ['nullable', 'exists:subjects,id', 'different:subject_id'],
+            'prerequisite_min_grade'  => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'is_required'             => ['required', 'boolean'],
+            'sequence_order'          => ['nullable', 'integer', 'min:0'],
+            'status'                  => ['required', 'in:active,inactive'],
         ]);
         
         // Check for duplicate (excluding current mapping)

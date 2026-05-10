@@ -88,6 +88,8 @@
     </div>
     <div class="enc-card__body" style="display:flex;flex-direction:column;gap:12px;">
       <a href="{{ route('report-card.download', auth()->id()) }}" class="enc-button enc-button--primary" target="_blank">Download PDF</a>
+      <a href="{{ route('complaints.create') }}" class="enc-button enc-button--secondary">File a Grade Complaint</a>
+      <a href="{{ route('complaints.index') }}" class="enc-button enc-button--secondary">My Complaints</a>
       <a href="{{ route('student.dashboard') }}" class="enc-button enc-button--secondary">Back to Dashboard</a>
     </div>
   </div>

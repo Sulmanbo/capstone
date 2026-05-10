@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Crypt;
@@ -27,7 +28,7 @@ use Illuminate\Support\Facades\Hash;
  */
 class User extends Authenticatable
 {
-    use Notifiable;
+    use HasFactory, Notifiable;
 
     protected $table = 'users';
 
@@ -134,6 +135,30 @@ class User extends Authenticatable
     public function setParentContactAttribute(?string $value): void
     {
         $this->attributes['parent_contact'] = $value ? Crypt::encryptString($value) : null;
+    }
+
+    // ── phone (AES-256) ───────────────────────────────────────────────────
+    public function getPhoneAttribute(?string $value): ?string
+    {
+        if (is_null($value)) return null;
+        try { return Crypt::decryptString($value); } catch (\Exception) { return $value; }
+    }
+
+    public function setPhoneAttribute(?string $value): void
+    {
+        $this->attributes['phone'] = $value ? Crypt::encryptString($value) : null;
+    }
+
+    // ── address (AES-256) ─────────────────────────────────────────────────
+    public function getAddressAttribute(?string $value): ?string
+    {
+        if (is_null($value)) return null;
+        try { return Crypt::decryptString($value); } catch (\Exception) { return $value; }
+    }
+
+    public function setAddressAttribute(?string $value): void
+    {
+        $this->attributes['address'] = $value ? Crypt::encryptString($value) : null;
     }
 
     // ── password (bcrypt) ──────────────────────────────────────────────────

@@ -72,6 +72,45 @@
             @enderror
         </div>
 
+        <!-- Prerequisite Subject -->
+        <div class="mb-6">
+            <label for="prerequisite_subject_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                Prerequisite Subject
+                <span class="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <select id="prerequisite_subject_id"
+                    name="prerequisite_subject_id"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent">
+                <option value="">— None —</option>
+                @foreach($subjects as $subject)
+                <option value="{{ $subject->id }}" {{ old('prerequisite_subject_id') == $subject->id ? 'selected' : '' }}>
+                    {{ $subject->subject_code }} - {{ $subject->subject_name }}
+                </option>
+                @endforeach
+            </select>
+            <p class="text-gray-500 text-sm mt-1">Student must have passed this subject in a prior academic year.</p>
+            @error('prerequisite_subject_id')
+            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Prerequisite Min Grade -->
+        <div class="mb-6">
+            <label for="prerequisite_min_grade" class="block text-sm font-semibold text-gray-700 mb-2">
+                Minimum Grade Required
+                <span class="text-gray-400 font-normal">(default: 75)</span>
+            </label>
+            <input type="number"
+                   id="prerequisite_min_grade"
+                   name="prerequisite_min_grade"
+                   value="{{ old('prerequisite_min_grade', 75) }}"
+                   min="0" max="100" step="0.01"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-transparent">
+            @error('prerequisite_min_grade')
+            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
         <!-- Type (Required/Elective) -->
         <div class="mb-6">
             <label for="is_required" class="block text-sm font-semibold text-gray-700 mb-2">

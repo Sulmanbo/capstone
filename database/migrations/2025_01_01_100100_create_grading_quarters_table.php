@@ -21,8 +21,7 @@ return new class extends Migration
             
             $table->foreignId('academic_year_id')
                   ->constrained('academic_years')
-                  ->onDelete('cascade')
-                  ->index();
+                  ->onDelete('cascade');
             
             $table->integer('quarter_number');  // 1, 2, 3, 4
             $table->string('quarter_name');     // e.g., "1st Quarter", "First Quarter"

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Fix two RESTRICT foreign keys that prevent user deletion:
@@ -32,6 +33,11 @@ return new class extends Migration
 
     public function up(): void
     {
+        // MySQL-only: SQLite does not support MODIFY COLUMN or named FK management.
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // ── attendance.recorded_by ─────────────────────────────────────────
         // 1. Make nullable (previous partial run may already have done this).
         DB::statement('ALTER TABLE attendance MODIFY COLUMN recorded_by BIGINT UNSIGNED NULL');
@@ -77,6 +83,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement('ALTER TABLE attendance DROP FOREIGN KEY attendance_recorded_by_foreign');
         DB::statement('ALTER TABLE attendance MODIFY COLUMN recorded_by BIGINT UNSIGNED NOT NULL');
         DB::statement('ALTER TABLE attendance ADD CONSTRAINT attendance_recorded_by_foreign FOREIGN KEY (recorded_by) REFERENCES users(id)');

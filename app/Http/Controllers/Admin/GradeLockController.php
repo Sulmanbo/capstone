@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\AuditLog;
+use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\GradingQuarter;
 use App\Models\GradeUnlockRequest;
 use App\Models\SectionSubject;
+use App\Models\User;
+use App\Notifications\GradeLockedNotification;
+use App\Notifications\UnlockDecidedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -88,6 +92,18 @@ class GradeLockController extends Controller
             'grades_locked'      => $affected,
         ]);
 
+        if ($affected > 0) {
+            $sectionSubject->loadMissing(['section', 'subject']);
+            $lockNotif = new GradeLockedNotification(
+                $sectionSubject->subject?->subject_name ?? 'Unknown Subject',
+                $sectionSubject->section?->section_name ?? 'Unknown Section',
+                'Quarter ' . $quarter->quarter_number,
+            );
+            User::whereHas('enrollments', fn($q) =>
+                $q->where('section_id', $sectionSubject->section_id)->where('status', 'enrolled')
+            )->each(fn($s) => $s->notify($lockNotif));
+        }
+
         return redirect()->route('registrar.grade-lock.index')
             ->with('success', "{$affected} grade(s) locked for {$sectionSubject->subject?->subject_name}.");
     }
@@ -135,6 +151,14 @@ class GradeLockController extends Controller
             'quarter_id'         => $unlockRequest->grading_quarter_id,
         ]);
 
+        $unlockRequest->loadMissing(['sectionSubject.subject', 'sectionSubject.section', 'requestedBy']);
+        $unlockRequest->requestedBy?->notify(new UnlockDecidedNotification(
+            $unlockRequest->sectionSubject?->subject?->subject_name ?? 'Unknown Subject',
+            $unlockRequest->sectionSubject?->section?->section_name ?? 'Unknown Section',
+            'approved',
+            null,
+        ));
+
         return redirect()->route('registrar.grade-lock.index')
             ->with('success', 'Unlock approved — faculty can now edit grades.');
     }
@@ -158,6 +182,14 @@ class GradeLockController extends Controller
             'unlock_request_id'  => $unlockRequest->id,
             'section_subject_id' => $unlockRequest->section_subject_id,
         ]);
+
+        $unlockRequest->loadMissing(['sectionSubject.subject', 'sectionSubject.section', 'requestedBy']);
+        $unlockRequest->requestedBy?->notify(new UnlockDecidedNotification(
+            $unlockRequest->sectionSubject?->subject?->subject_name ?? 'Unknown Subject',
+            $unlockRequest->sectionSubject?->section?->section_name ?? 'Unknown Section',
+            'denied',
+            $request->input('review_notes'),
+        ));
 
         return redirect()->route('registrar.grade-lock.index')
             ->with('success', 'Unlock request denied.');

@@ -10,6 +10,9 @@ use App\Models\Grade;
 use App\Models\GradingQuarter;
 use App\Models\GradeUnlockRequest;
 use App\Models\SectionSubject;
+use App\Models\User;
+use App\Notifications\GradeFinalizedNotification;
+use App\Notifications\UnlockRequestedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -187,6 +190,15 @@ class GradebookController extends Controller
             'grades_finalized'   => $submittedGrades->count(),
         ]);
 
+        $gradeFinalized = new GradeFinalizedNotification(
+            $ss->subject?->subject_name ?? 'Unknown Subject',
+            $ss->section?->section_name ?? 'Unknown Section',
+            'Quarter ' . $quarter->quarter_number,
+        );
+        User::whereHas('enrollments', fn($q) =>
+            $q->where('section_id', $ss->section_id)->where('status', 'enrolled')
+        )->each(fn($s) => $s->notify($gradeFinalized));
+
         return redirect()->back()
             ->with('success', "{$submittedGrades->count()} grade(s) finalized.");
     }
@@ -226,6 +238,14 @@ class GradebookController extends Controller
             'section_subject_id' => $ss->id,
             'quarter_id'         => $quarter->id,
         ]);
+
+        $unlockNotif = new UnlockRequestedNotification(
+            $ss->subject?->subject_name ?? 'Unknown Subject',
+            $ss->section?->section_name ?? 'Unknown Section',
+            auth()->user()->full_name,
+            $request->input('reason'),
+        );
+        User::where('role_id', '03')->each(fn($r) => $r->notify($unlockNotif));
 
         return redirect()->route('faculty.gradebook.show', $sectionSubject)
             ->with('success', 'Unlock request submitted. The registrar will review it shortly.');

@@ -216,6 +216,9 @@
             </div>
           </div>
         @endforeach
+        <div style="margin-top:.85rem;padding-top:.75rem;border-top:1px solid rgba(15,23,42,.06);text-align:right;">
+          <a href="{{ route('complaints.create') }}" style="font-size:.78rem;color:var(--primary);font-weight:700;text-decoration:none;">File a Grade Complaint →</a>
+        </div>
       </div>
     </div>
 

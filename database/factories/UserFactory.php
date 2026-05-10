@@ -2,44 +2,41 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
-/**
- * @extends Factory<User>
- */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
-
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'first_name'              => fake()->firstName(),
+            'last_name'               => fake()->lastName(),
+            'email'                   => fake()->unique()->safeEmail(),
+            'username'                => fake()->unique()->userName(),
+            'password'                => bcrypt('password'),
+            'role_id'                 => '01',
+            'status'                  => 'active',
+            'password_reset_required' => false,
+            'failed_attempts'         => 0,
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
+    public function admin(): static    { return $this->state(['role_id' => '04']); }
+    public function faculty(): static  { return $this->state(['role_id' => '02']); }
+    public function registrar(): static{ return $this->state(['role_id' => '03']); }
+    public function student(): static  { return $this->state(['role_id' => '01']); }
+
+    public function forcePasswordReset(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+        return $this->state(['password_reset_required' => true]);
+    }
+
+    public function locked(): static
+    {
+        return $this->state([
+            'status'          => 'locked',
+            'locked_until'    => now()->addMinutes(10),
+            'failed_attempts' => 5,
         ]);
     }
 }
