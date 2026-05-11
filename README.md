@@ -1,6 +1,6 @@
 # EncryptEd — Academic Management System
 
-A secure, role-based academic management system built with Laravel 11 for a Philippine junior high school. It covers the full student lifecycle: admission → enrollment → grading → reporting, with RA 10173 (Data Privacy Act) compliance baked in.
+A secure, role-based academic management system built with Laravel 12 for a Philippine junior high school. It covers the full student lifecycle: admission → enrollment → grading → reporting, with RA 10173 (Data Privacy Act) compliance baked in.
 
 ---
 
@@ -138,13 +138,16 @@ Tests use SQLite in-memory. No database setup required.
 php artisan test --testsuite=Feature
 ```
 
-**29 tests, 72 assertions** — all passing.
+**37 tests, 85 assertions** — all passing.
 
 | Test File | Tests | Coverage |
 |---|---|---|
-| `Auth/LoginTest` | 13 | Login, role redirects, lockout, force-reset, logout |
+| `Auth/LoginTest` | 14 | Login, role redirects, lockout, force-reset, logout, enumeration |
+| `Auth/InjectionDefenseTest` | 2 | Legitimate apostrophe names, SQL injection blocking |
 | `GradeFlowTest` | 9 | Draft, submit, finalize, lock, unlock request/approve/deny |
 | `ComplaintTest` | 7 | Submission, duplicate prevention, authorization, faculty response |
+| `ReportCardAuditTest` | 2 | REPORT_CARD_GENERATED and REPORT_CARD_VERIFIED audit logs |
+| `PrerequisiteEnforcementTest` | 2 | Blocks enrollment when prereqs unmet, allows when met |
 
 ---
 
@@ -158,3 +161,42 @@ Add to the server's crontab to enable scheduled jobs:
 
 Scheduled jobs:
 - `audit:prune --days=365` — every Sunday at 02:00
+
+---
+
+## Security
+
+A full description of the security controls, encryption coverage, audit log integrity, and RA 10173 alignment is in [`docs/SECURITY.md`](docs/SECURITY.md).
+
+Quick reference:
+
+- Passwords: bcrypt (cost 12)
+- PII at rest: AES-256 on `email`, `phone`, `address`, `parent_name`, `parent_contact`, applicant contact and address fields
+- Audit logs: SHA-256 hash-chained, verifiable via `php artisan audit:verify`
+- Brute force: 5-attempt account lock (10 min) + per-IP rate limit
+- Report cards: SHA-256-tokened PDFs with public QR verification
+
+## Environment Variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `APP_ENV` | `local` | Set to `production` for deployment |
+| `SESSION_SECURE_COOKIE` | `false` | **Must be `true` in production** |
+| `INJECTION_DEFENSE_MODE` | `block` | `block` for prod, `monitor` for dev |
+| `DB_CONNECTION` | `mysql` | Use `sqlite` for tests |
+
+## Running Tests
+
+```bash
+php artisan test
+```
+
+Expected: 37+ tests passing.
+
+## Acceptance Verification
+
+```bash
+php artisan migrate:fresh --seed     # must complete cleanly
+php artisan test                     # all green
+php artisan audit:verify             # "Chain intact" or "No rows to verify"
+```
