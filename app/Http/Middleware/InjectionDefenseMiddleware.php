@@ -11,13 +11,15 @@ use App\Models\ThreatEvent;
 /**
  * InjectionDefenseMiddleware
  *
- * Scans user-supplied input fields for SQL injection and XSS patterns.
- * Exempts Laravel's own internal fields (_token, _method, remember)
- * so that DELETE/PATCH/PUT form spoofing works correctly.
+ * SECONDARY defense layer for anomaly detection and logging.
+ * Eloquent's parameter binding is the PRIMARY defense against SQL injection;
+ * this middleware exists to catch obvious attack patterns early and produce
+ * audit/threat trails for security review.
  *
- * SQL patterns are context-aware — they require dangerous combinations
- * (e.g. "DELETE FROM", "DROP TABLE") not just the bare keyword, which
- * would false-positive on legitimate words like "update" in a name field.
+ * Modes (config/security.php → injection_defense_mode):
+ *   - block:   abort matching requests with 403 (default in production)
+ *   - monitor: log only, allow request through (use in local/dev to avoid
+ *              false positives blocking legitimate developer testing)
  */
 class InjectionDefenseMiddleware
 {
@@ -59,9 +61,9 @@ class InjectionDefenseMiddleware
         "/'\s*\/\*/",                            // ' /*
         '/;\s*(DROP|DELETE|INSERT|UPDATE)\b/i',  // ; DROP ...
 
-        // Classic ' OR 1=1 style
-        "/'\s*(OR|AND)\s+['\"0-9]/i",
-        "/\"\s*(OR|AND)\s+['\"]?\d/i",
+        // Classic ' OR 1=1 / ' AND 1=1 style — require digit=digit or quoted-string=quoted-string
+        '/[\'"]\s*(OR|AND)\s+\d+\s*=\s*\d+/i',
+        '/[\'"]\s*(OR|AND)\s+[\'"][^\'"]+[\'"]\s*=\s*[\'"]/i',
 
         // ── XSS ───────────────────────────────────────────────────────────
         '/<script\b[^>]*>/i',
@@ -84,49 +86,43 @@ class InjectionDefenseMiddleware
 
     public function handle(Request $request, Closure $next): Response
     {
+        $mode = config('security.injection_defense_mode', 'block');
+
         // Scan user-supplied text fields
         $inputToScan = $request->except($this->exemptFields);
-        $blocked     = $this->containsMaliciousInput($inputToScan);
+        $detected    = $this->containsMaliciousInput($inputToScan);
 
         // Also scan uploaded file original names for path traversal / null bytes
-        if (!$blocked) {
+        if (!$detected) {
             foreach ($request->allFiles() as $file) {
                 $files = is_array($file) ? $file : [$file];
                 foreach ($files as $f) {
                     if ($f && $this->containsMaliciousInput($f->getClientOriginalName())) {
-                        $blocked = true;
+                        $detected = true;
                         break 2;
                     }
                 }
             }
         }
 
-        if ($blocked) {
-            AuditLog::record(
-                AuditLog::INJECTION_BLOCKED,
-                [
-                    'route'  => $request->path(),
-                    'method' => $request->method(),
-                    'note'   => 'Forbidden pattern detected in request input',
-                ],
-                auth()->id(),
-                auth()->user()?->full_name ?? 'Unauthenticated'
-            );
+        $blocked = $detected && $mode === 'block';
 
+        if ($detected) {
+            AuditLog::record(AuditLog::INJECTION_BLOCKED, [
+                'mode'   => $mode,
+                'route'  => $request->path(),
+                'method' => $request->method(),
+            ]);
             ThreatEvent::record(
-                'injection',
-                'high',
-                'Injection Attempt Blocked',
-                \sprintf(
-                    'Forbidden input pattern on [%s %s] from IP %s',
-                    $request->method(),
-                    $request->path(),
-                    $request->ip()
-                ),
-                auth()->id(),
-                $request->path()
+                'injection_attempt',
+                $mode === 'block' ? 'high' : 'low',
+                'Injection Pattern Detected',
+                "Suspicious pattern in request to {$request->path()} (mode: {$mode})",
+                auth()->id()
             );
+        }
 
+        if ($blocked) {
             // Return a real response (not abort) so SecurityHeaders middleware
             // can still apply its headers to this 403 response.
             return response()->view('errors.403', [
