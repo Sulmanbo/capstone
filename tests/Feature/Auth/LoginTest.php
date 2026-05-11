@@ -112,3 +112,25 @@ test('authenticated user can log out', function () {
 
     $this->assertGuest();
 });
+
+it('locked account returns the same generic error as unknown user', function () {
+    $user = User::factory()->create([
+        'username'        => 'lockeduser',
+        'password'        => 'Correct@Pass1',
+        'status'          => 'locked',
+        'locked_until'    => now()->addMinutes(5),
+        'failed_attempts' => 5,
+    ]);
+
+    $unknownResponse = $this->post('/login', [
+        'username' => 'noSuchUser',
+        'password' => 'whatever',
+    ]);
+    $lockedResponse = $this->post('/login', [
+        'username' => 'lockeduser',
+        'password' => 'Correct@Pass1',
+    ]);
+
+    expect($unknownResponse->getSession()->get('errors')->first('username'))
+        ->toBe($lockedResponse->getSession()->get('errors')->first('username'));
+});

@@ -233,6 +233,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/registrar/calendar',       [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'calendar'])      ->name('registrar.calendar');
         Route::get('/registrar/announcements',  [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'announcements']) ->name('registrar.announcements');
 
+        // Enrollment (with prerequisite enforcement)
+        Route::post('/registrar/enroll', [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'enroll'])->name('registrar.enroll');
+
         // Grade finalization
         Route::post('/registrar/gradebook/{sectionSubject}/finalize', [App\Http\Controllers\Dashboard\GradebookController::class, 'finalize'])->name('registrar.gradebook.finalize');
 

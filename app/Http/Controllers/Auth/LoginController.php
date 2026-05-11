@@ -50,11 +50,25 @@ class LoginController extends Controller
         $user->refresh();
 
         if ($user->status === 'locked') {
-            $minutesLeft = max(1, now()->diffInMinutes($user->locked_until, false));
-            AuditLog::record(AuditLog::LOGIN_FAILED, ['reason' => 'Account locked'], $user->id, $user->full_name);
+            // Use the same generic message as unknown-user and deactivated branches.
+            // The internal threat log captures the real lock state for admins.
+            $minutesLeft = max(1, (int) now()->diffInMinutes($user->locked_until, false));
+            AuditLog::record(
+                AuditLog::LOGIN_FAILED,
+                ['reason' => 'Account locked', 'minutes_remaining' => $minutesLeft],
+                $user->id,
+                $user->full_name
+            );
+            ThreatEvent::record(
+                'login_attempt_on_locked_account',
+                'medium',
+                'Login Attempt on Locked Account',
+                "Login attempted on locked account [{$user->username}]. {$minutesLeft} min remaining.",
+                $user->id
+            );
             return back()
                 ->withInput($request->only('username'))
-                ->withErrors(['username' => "Account temporarily locked. Try again in {$minutesLeft} minute(s)."]);
+                ->withErrors(['username' => 'Invalid credentials. Please try again.']);
         }
 
         if ($user->status === 'deactivated') {

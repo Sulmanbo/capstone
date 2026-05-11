@@ -62,6 +62,10 @@ class AuditLog extends Model
     public const GRADE_COMPLAINT_DISMISSED = 'GRADE_COMPLAINT_DISMISSED';
     public const APPLICANT_STATUS_UPDATED  = 'APPLICANT_STATUS_UPDATED';
     public const ENTRANCE_TEST_RECORDED    = 'ENTRANCE_TEST_RECORDED';
+    public const REPORT_CARD_GENERATED     = 'REPORT_CARD_GENERATED';
+    public const REPORT_CARD_VERIFIED      = 'REPORT_CARD_VERIFIED';
+    public const ENROLLMENT_CREATED        = 'ENROLLMENT_CREATED';
+    public const ENROLLMENT_BLOCKED_PREREQUISITE = 'ENROLLMENT_BLOCKED_PREREQUISITE';
 
     // ══════════════════════════════════════════════════════════════════════
     // STATIC HELPER — use this everywhere instead of ::create() directly
