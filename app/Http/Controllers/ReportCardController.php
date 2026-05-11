@@ -126,18 +126,20 @@ class ReportCardController extends Controller
             ]);
         }
 
+        AuditLog::record(AuditLog::REPORT_CARD_GENERATED, [
+            'student_id'       => $student->id,
+            'student_name'     => $student->full_name,
+            'academic_year_id' => $year->id,
+            'token'            => $token->token,
+            'data_hash'        => $dataHash,
+        ]);
+
         // Generate QR code pointing to the public verify URL
         $verifyUrl = route('report-card.verify', $token->token);
         $qrCode    = new QrCode($verifyUrl);
         $writer    = new PngWriter();
         $result    = $writer->write($qrCode);
         $qrDataUri = 'data:image/png;base64,' . base64_encode($result->getString());
-
-        AuditLog::record(AuditLog::EXPORT_REPORT, [
-            'report'     => 'report_card_pdf',
-            'student_id' => $student->id,
-            'token'      => $token->token,
-        ]);
 
         $pdf = Pdf::loadView('pdf.report-card', array_merge($data, [
             'token'      => $token,
@@ -167,6 +169,24 @@ class ReportCardController extends Controller
         $currentHash = ReportCardToken::hashGradeData($fingerprint);
 
         $intact = hash_equals($record->data_hash, $currentHash);
+
+        AuditLog::record(AuditLog::REPORT_CARD_VERIFIED, [
+            'token'        => $token,
+            'student_id'   => $record->student_id,
+            'intact'       => $intact,
+            'verified_by'  => auth()->id(), // null if public
+            'source_ip'    => request()->ip(),
+        ], userId: null);   // public endpoint — no auth user
+
+        if (!$intact) {
+            \App\Models\ThreatEvent::record(
+                'report_card_tamper_detected',
+                'critical',
+                'Report Card Tamper Detected',
+                "Verification for token {$token} found grade data hash mismatch.",
+                null
+            );
+        }
 
         return view('report-card.verify', compact('record', 'data', 'intact'));
     }
