@@ -15,11 +15,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Skip if a test user already exists (idempotent for repeated seeds)
+        if (User::where('username', 'testuser')->exists()) {
+            return;
+        }
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name'  => 'User',
+            'username'   => 'testuser',
+            'email'      => 'test@example.com',
+            'role_id'    => '04',          // admin so manual testing has full access
         ]);
     }
 }
