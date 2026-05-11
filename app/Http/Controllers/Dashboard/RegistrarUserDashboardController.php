@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Announcement;
+use App\Models\Enrollment;
 use App\Models\GradingQuarter;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -190,5 +191,51 @@ class RegistrarUserDashboardController extends Controller
             ->orderByDesc('created_at')
             ->get();
         return view('dashboard.registrar-announcements', compact('announcements'));
+    }
+
+    public function enroll(Request $request)
+    {
+        $request->validate([
+            'student_id'       => ['required', 'exists:users,id'],
+            'grade_level'      => ['required', 'string'],
+            'section_id'       => ['required', 'exists:sections,id'],
+            'academic_year_id' => ['required', 'exists:academic_years,id'],
+        ]);
+
+        $student = User::findOrFail($request->student_id);
+
+        $unmet = app(PrerequisiteService::class)
+            ->getUnmet($student, $request->grade_level, $request->academic_year_id);
+
+        if (!empty($unmet)) {
+            $msgList = collect($unmet)
+                ->map(fn($u) => "{$u['subject']} requires {$u['requires']} (min {$u['min_grade']})")
+                ->implode('; ');
+
+            AuditLog::record(AuditLog::ENROLLMENT_BLOCKED_PREREQUISITE, [
+                'student_id'  => $student->id,
+                'grade_level' => $request->grade_level,
+                'unmet'       => $msgList,
+            ]);
+
+            return back()->withErrors([
+                'enrollment' => "Enrollment blocked. Unmet prerequisites: {$msgList}",
+            ])->withInput();
+        }
+
+        Enrollment::create([
+            'student_id'       => $student->id,
+            'section_id'       => $request->section_id,
+            'academic_year_id' => $request->academic_year_id,
+            'status'           => 'enrolled',
+            'enrolled_at'      => now(),
+        ]);
+
+        AuditLog::record(AuditLog::ENROLLMENT_CREATED, [
+            'student_id'  => $student->id,
+            'grade_level' => $request->grade_level,
+        ]);
+
+        return back()->with('success', 'Student enrolled successfully.');
     }
 }

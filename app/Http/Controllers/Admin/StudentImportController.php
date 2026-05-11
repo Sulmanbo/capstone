@@ -121,6 +121,22 @@ class StudentImportController extends Controller
                     if (!empty($fields['section_name']) && $activeYear) {
                         $section = Section::where('section_name', $fields['section_name'])->first();
                         if ($section && !Enrollment::existsForStudentAndYear($user->id, $activeYear->id)) {
+                            $gradeLevel   = $fields['grade_level'] ?? null;
+                            $unmetPrereqs = $gradeLevel
+                                ? app(\App\Services\PrerequisiteService::class)
+                                    ->getUnmet($user, $gradeLevel, $activeYear->id)
+                                : [];
+
+                            if (!empty($unmetPrereqs)) {
+                                $unmetNames = collect($unmetPrereqs)
+                                    ->pluck('requires')
+                                    ->unique()
+                                    ->implode(', ');
+                                throw new \RuntimeException(
+                                    "Student {$user->lrn} cannot be enrolled in {$gradeLevel} — unmet prerequisites: {$unmetNames}."
+                                );
+                            }
+
                             Enrollment::create([
                                 'student_id'       => $user->id,
                                 'section_id'       => $section->id,
