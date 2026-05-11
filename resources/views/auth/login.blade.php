@@ -317,6 +317,11 @@
       </div>
     @endif
 
+    <div class="mb-4 rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:.78rem;color:#1e40af;">
+        Multiple failed attempts will temporarily lock your account for 10 minutes.
+        If you can't sign in, use <a href="{{ route('password.request') }}" style="text-decoration:underline;font-weight:600;">Forgot Password</a>.
+    </div>
+
     <form method="POST" action="{{ route('login') }}" autocomplete="off">
       @csrf
 
