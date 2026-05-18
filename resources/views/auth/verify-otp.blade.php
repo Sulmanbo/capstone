@@ -188,6 +188,20 @@
       <div class="status-msg">{{ session('status') }}</div>
     @endif
 
+    @if(session('dev_otp'))
+    <div style="background:#fefce8;border:1.5px dashed #ca8a04;border-radius:10px;padding:14px 18px;margin-bottom:20px;text-align:center;">
+      <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#92400e;margin-bottom:6px;">
+        ⚠ LOCAL DEV MODE — OTP not emailed
+      </div>
+      <div style="font-size:2rem;font-weight:900;font-family:monospace;letter-spacing:.25em;color:#1e293b;">
+        {{ session('dev_otp') }}
+      </div>
+      <div style="font-size:.7rem;color:#78350f;margin-top:4px;">
+        Configure MAIL_MAILER in .env for production use
+      </div>
+    </div>
+    @endif
+
     <form method="POST" action="{{ route('password.verify-otp.submit') }}" id="otp-form">
       @csrf
 

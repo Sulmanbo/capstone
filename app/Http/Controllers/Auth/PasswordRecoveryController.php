@@ -72,7 +72,13 @@ class PasswordRecoveryController extends Controller
             $plainOtp = PasswordOtp::generateOtp();
             PasswordOtp::createForEmail($emailHash, $plainOtp, self::OTP_EXPIRY_MINUTES);
 
-            // Send email via SendGrid SMTP
+            // In local dev, expose OTP via session so it can be shown in the UI
+            // without needing a real SMTP server configured.
+            if (app()->environment('local')) {
+                session(['dev_otp' => $plainOtp]);
+            }
+
+            // Send email via configured mail driver (SendGrid SMTP in production)
             try {
                 Mail::to($email)->send(new OtpMail(
                     $plainOtp,
@@ -81,9 +87,13 @@ class PasswordRecoveryController extends Controller
                 ));
             } catch (\Exception $e) {
                 \Log::error('OTP email failed: ' . $e->getMessage());
-                return back()->withErrors([
-                    'email' => 'Failed to send OTP email. Please try again or contact your administrator.',
-                ]);
+
+                // In local development, continue without email — OTP is shown in the UI.
+                if (!app()->environment('local')) {
+                    return back()->withErrors([
+                        'email' => 'Failed to send OTP email. Please try again or contact your administrator.',
+                    ]);
+                }
             }
 
             AuditLog::record(
