@@ -15,6 +15,7 @@ class AuditLogController extends Controller
         $actionType = $request->input('action_type');
         $dateFrom   = $request->input('date_from');
         $dateTo     = $request->input('date_to');
+        $sourceIp   = $request->input('source_ip');
         $sort       = $request->input('sort', 'created_at');
         $dir        = $request->input('dir', 'desc');
 
@@ -22,7 +23,7 @@ class AuditLogController extends Controller
         $query = AuditLog::query();
 
         if ($actor) {
-            $query->where(function($q) use ($actor) {
+            $query->where(function ($q) use ($actor) {
                 $q->where('user_id', $actor)
                   ->orWhere('actor_name', 'like', "%{$actor}%");
             });
@@ -40,6 +41,10 @@ class AuditLogController extends Controller
             $query->whereDate('created_at', '<=', $dateTo);
         }
 
+        if ($sourceIp) {
+            $query->where('source_ip', 'like', "%{$sourceIp}%");
+        }
+
         $logs = $query->orderBy($sort, $dir)->paginate(100)->withQueryString();
 
         // ── Statistics ────────────────────────────────────────────────────
@@ -51,6 +56,8 @@ class AuditLogController extends Controller
             'locked_accounts'      => AuditLog::where('action_type', 'LIKE', '%LOCK%')->count(),
         ];
 
-        return view('admin.threat.audit-log', compact('logs', 'stats', 'actor', 'actionType', 'dateFrom', 'dateTo'));
+        return view('admin.threat.audit-log', compact(
+            'logs', 'stats', 'actor', 'actionType', 'dateFrom', 'dateTo', 'sourceIp'
+        ));
     }
 }

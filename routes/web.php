@@ -58,11 +58,7 @@ Route::get('/report-card/{student}/download', [\App\Http\Controllers\ReportCardC
 Route::get('/verify/{token}', [\App\Http\Controllers\ReportCardController::class, 'verify'])
     ->name('report-card.verify');
 
-// ── Public Applicant Onboarding ───────────────────────────────────────────
-Route::get( '/apply',          [\App\Http\Controllers\ApplicantController::class, 'create'])->name('apply');
-Route::post('/apply',          [\App\Http\Controllers\ApplicantController::class, 'store']) ->name('apply.store')
-    ->middleware('throttle:10,5'); // 10 submissions per 5 minutes per IP
-Route::get( '/apply/thanks/{reference}', [\App\Http\Controllers\ApplicantController::class, 'thanks'])->name('apply.thanks');
+// ── Public Applicant Onboarding — REMOVED (out of scope: grading management only) ──
 
 // ── Mandatory First-Login Password Reset ──────────────────────────────────
 Route::middleware('auth')->group(function () {
@@ -121,19 +117,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     // ── Registrar Module — Dashboard ──────────────────────────────────────
     Route::get('/registrar-dashboard', [RegistrarDashboardController::class, 'index'])->name('registrar-dashboard');
 
-    // ── Applicant Management ──────────────────────────────────────────────
-    Route::prefix('applicants')->name('applicants.')->group(function () {
-        Route::get('/',               [\App\Http\Controllers\Admin\ApplicantManagementController::class, 'index'])       ->name('index');
-        Route::get('/{applicant}',    [\App\Http\Controllers\Admin\ApplicantManagementController::class, 'show'])        ->name('show');
-        Route::patch('/{applicant}/status', [\App\Http\Controllers\Admin\ApplicantManagementController::class, 'updateStatus'])->name('update-status');
-    });
-
-    // ── Entrance Test Results ─────────────────────────────────────────────
-    Route::prefix('entrance-tests')->name('entrance-tests.')->group(function () {
-        Route::get('/',                     [EntranceTestController::class, 'index'])  ->name('index');
-        Route::get('/{applicant}/record',   [EntranceTestController::class, 'create']) ->name('create');
-        Route::post('/{applicant}/record',  [EntranceTestController::class, 'store'])  ->name('store');
-    });
+    // ── Applicant Management — REMOVED (out of scope: grading management only) ──
+    // ── Entrance Test Results   — REMOVED (out of scope: grading management only) ──
 
     // ── Academic Years Management ─────────────────────────────────────────
     Route::prefix('academic-years')->name('academic-years.')->group(function () {
@@ -245,6 +230,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/registrar/grade-lock/lock-all',                              [App\Http\Controllers\Admin\GradeLockController::class, 'lockAll'])        ->name('registrar.grade-lock.lock-all');
         Route::post('/registrar/grade-lock/unlock-requests/{unlockRequest}/approve', [App\Http\Controllers\Admin\GradeLockController::class, 'approveUnlock'])->name('registrar.grade-lock.approve');
         Route::post('/registrar/grade-lock/unlock-requests/{unlockRequest}/deny',    [App\Http\Controllers\Admin\GradeLockController::class, 'denyUnlock'])   ->name('registrar.grade-lock.deny');
+
+        // Student Promotion and Advancement
+        Route::get( '/registrar/promotion', [App\Http\Controllers\Dashboard\PromotionController::class, 'index'])   ->name('registrar.promotion');
+        Route::post('/registrar/promotion', [App\Http\Controllers\Dashboard\PromotionController::class, 'promote']) ->name('registrar.promotion.promote');
+
+        // Aggregate Reports (honor roll + academic intervention)
+        Route::get('/registrar/reports/aggregate', [App\Http\Controllers\Dashboard\AggregateReportController::class, 'index'])->name('registrar.reports.aggregate');
     });
 
     // Faculty Dashboard & Pages
@@ -261,6 +253,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/faculty/gradebook/{sectionSubject}/save-draft',          [App\Http\Controllers\Dashboard\GradebookController::class, 'saveDraft'])      ->name('faculty.gradebook.save-draft');
         Route::post('/faculty/gradebook/{sectionSubject}/submit',              [App\Http\Controllers\Dashboard\GradebookController::class, 'submit'])         ->name('faculty.gradebook.submit');
         Route::post('/faculty/gradebook/{sectionSubject}/request-unlock',      [App\Http\Controllers\Dashboard\GradebookController::class, 'requestUnlock'])  ->name('faculty.gradebook.request-unlock');
+
+        // Dropped student workflow
+        Route::post('/faculty/gradebook/{sectionSubject}/drop',      [App\Http\Controllers\Dashboard\GradebookController::class, 'dropStudent'])      ->name('faculty.gradebook.drop');
+        Route::post('/faculty/gradebook/{sectionSubject}/reinstate',  [App\Http\Controllers\Dashboard\GradebookController::class, 'reinstateStudent']) ->name('faculty.gradebook.reinstate');
     });
 
     // Student Dashboard

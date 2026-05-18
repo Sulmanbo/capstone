@@ -12,12 +12,11 @@ use RuntimeException;
  * Stores one student's grade for one subject in one quarter.
  *
  * Workflow: draft → submitted → finalized → locked
+ * A grade can also be marked as dropped (dropped_at is set) at any stage
+ * by faculty to record mid-quarter withdrawals.
  *
- * Once the status reaches 'locked', the updating() boot hook
- * throws a RuntimeException to prevent any further edits.
- *
- * computeFinalGrade() uses the DepEd weights from config/academic.php:
- *   WW 30% + PT 50% + QA 20%
+ * computeFinalGrade() uses subject-specific weights when configured,
+ * otherwise falls back to config/academic.php global weights.
  */
 class Grade extends Model
 {
@@ -37,6 +36,9 @@ class Grade extends Model
         'finalized_at',
         'finalized_by',
         'remarks',
+        'dropped_at',
+        'drop_reason',
+        'dropped_by',
     ];
 
     protected $casts = [
@@ -46,6 +48,7 @@ class Grade extends Model
         'final_grade'           => 'float',
         'submitted_at'          => 'datetime',
         'finalized_at'          => 'datetime',
+        'dropped_at'            => 'datetime',
     ];
 
     // ── Boot — immutability guard ──────────────────────────────────────────
@@ -55,7 +58,12 @@ class Grade extends Model
         parent::boot();
 
         static::updating(function (Grade $model) {
-            if ($model->getOriginal('status') === 'locked') {
+            // Allow drop/reinstate updates on locked grades but block all other edits
+            $onlyDropFields = collect($model->getDirty())->keys()
+                ->diff(['dropped_at', 'drop_reason', 'dropped_by'])
+                ->isEmpty();
+
+            if ($model->getOriginal('status') === 'locked' && !$onlyDropFields) {
                 throw new RuntimeException('Locked grade records cannot be modified.');
             }
         });
@@ -88,6 +96,11 @@ class Grade extends Model
         return $this->belongsTo(User::class, 'finalized_by');
     }
 
+    public function droppedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dropped_by');
+    }
+
     // ── Scopes ─────────────────────────────────────────────────────────────
 
     public function scopeDraft($query)
@@ -110,6 +123,11 @@ class Grade extends Model
         return $query->where('status', 'locked');
     }
 
+    public function scopeNotDropped($query)
+    {
+        return $query->whereNull('dropped_at');
+    }
+
     public function scopeForActiveAcademicYear($query)
     {
         $activeYear = AcademicYear::where('status', 'active')->first();
@@ -126,10 +144,15 @@ class Grade extends Model
 
     /**
      * Compute the DepEd final grade from the three components.
-     * Returns null if any component is missing.
+     * Returns null if dropped, if any component is missing, or on error.
+     * Uses subject-specific weights when configured, otherwise the global config.
      */
     public function computeFinalGrade(): ?float
     {
+        if ($this->isDropped()) {
+            return null;
+        }
+
         if (is_null($this->written_work)
             || is_null($this->performance_task)
             || is_null($this->quarterly_assessment))
@@ -137,7 +160,11 @@ class Grade extends Model
             return null;
         }
 
-        $w = config('academic.grade_weights');
+        $subject = $this->relationLoaded('sectionSubject')
+            ? $this->sectionSubject?->subject
+            : $this->sectionSubject?->load('subject')?->subject;
+
+        $w = $subject?->getGradeWeights() ?? config('academic.grade_weights');
 
         return round(
             ($this->written_work         * $w['written_work']) +
@@ -149,8 +176,6 @@ class Grade extends Model
 
     /**
      * Return the DepEd descriptor label for the stored final_grade.
-     * DepEd rounds grades to the nearest whole number before applying
-     * the descriptor table (DepEd Order No. 8 s. 2015).
      */
     public function getDescriptorAttribute(): ?string
     {
@@ -168,12 +193,18 @@ class Grade extends Model
 
     public function isPassing(): bool
     {
-        return !is_null($this->final_grade)
+        return !$this->isDropped()
+            && !is_null($this->final_grade)
             && $this->final_grade >= config('academic.passing_grade');
     }
 
     public function isEditable(): bool
     {
         return $this->status !== 'locked';
+    }
+
+    public function isDropped(): bool
+    {
+        return $this->dropped_at !== null;
     }
 }

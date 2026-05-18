@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Announcement;
+use App\Models\Applicant;
 use App\Models\Enrollment;
+use App\Models\GradeComplaint;
+use App\Models\GradeUnlockRequest;
 use App\Models\GradingQuarter;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -16,14 +19,14 @@ use Illuminate\Http\Request;
  * RegistrarUserDashboardController
  *
  * Dashboard for Registrar staff (role 03) who work in the registrar's office.
- * Shows academic calendar, upcoming deadlines, and their personal tasks.
+ * Shows academic calendar, live workload metrics, and pending actions.
  */
 class RegistrarUserDashboardController extends Controller
 {
     public function index(Request $request)
     {
         $user = auth()->user();
-        
+
         // ── Current Academic Information ───────────────────────────────────
         $activeAcademicYear = AcademicYear::where('status', 'active')->first();
         $activeQuarter = null;
@@ -32,74 +35,131 @@ class RegistrarUserDashboardController extends Controller
                 ->where('status', 'active')
                 ->first();
         }
-        
+
         // ── Recent Activities (Audit Log) ──────────────────────────────────
         $recentActivities = AuditLog::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get();
-        
-        // ── System Statistics for Context ──────────────────────────────────
+
+        // ── Live System Statistics ─────────────────────────────────────────
+        $pendingUnlockCount   = GradeUnlockRequest::where('status', 'pending')->count();
+        $pendingComplaintCount = GradeComplaint::where('status', 'pending')->count();
+        $pendingTotal         = $pendingUnlockCount + $pendingComplaintCount;
+
+        $completedTotal = GradeUnlockRequest::whereIn('status', ['approved', 'denied'])->count()
+                        + GradeComplaint::whereIn('status', ['resolved', 'dismissed'])->count();
+
+        $enrollmentCount = $activeAcademicYear
+            ? Enrollment::where('academic_year_id', $activeAcademicYear->id)
+                ->where('status', 'enrolled')
+                ->count()
+            : 0;
+
+        $applicantsInReview = Applicant::whereIn('status', ['under_review', 'for_test', 'tested'])->count();
+
         $stats = [
-            'active_academic_year' => $activeAcademicYear,
-            'active_quarter' => $activeQuarter,
-            'pending_requests' => 34,
-            'completed_requests' => 182,
-            'enrollment_verifications' => 18,
-            'documents_in_review' => 9,
-        ];
-        
-        // ── Pending Registrar Workload ─────────────────────────────────────
-        $pendingRequests = [
-            ['type' => 'Transcript Request', 'student' => 'Juan Dela Cruz', 'status' => 'Waiting Approval', 'submitted' => 'Apr 28, 2026', 'due' => 'May 5, 2026'],
-            ['type' => 'Enrollment Certification', 'student' => 'Maria Santos', 'status' => 'Under Review', 'submitted' => 'Apr 29, 2026', 'due' => 'May 6, 2026'],
-            ['type' => 'Grade Verification', 'student' => 'Pedro Reyes', 'status' => 'Pending Documents', 'submitted' => 'Apr 30, 2026', 'due' => 'May 8, 2026'],
-            ['type' => 'Clearance Form', 'student' => 'Anna Lopez', 'status' => 'Ready for Print', 'submitted' => 'May 1, 2026', 'due' => 'May 4, 2026'],
+            'active_academic_year'     => $activeAcademicYear,
+            'active_quarter'           => $activeQuarter,
+            'pending_requests'         => $pendingTotal,
+            'completed_requests'       => $completedTotal,
+            'enrollment_verifications' => $enrollmentCount,
+            'documents_in_review'      => $applicantsInReview,
         ];
 
-        // ── Registrar Deadlines and Office Notices ──────────────────────────
-        $deadlines = [
-            ['title' => 'Senior Certificate Submission', 'date' => 'May 15, 2026', 'note' => 'Verify all forms before submission.'],
-            ['title' => 'Summer Enrollment Freeze', 'date' => 'May 20, 2026', 'note' => 'Finalize transcript batch before freeze.'],
-            ['title' => 'Document Audit Review', 'date' => 'May 25, 2026', 'note' => 'Complete pending audit entries for this term.'],
-        ];
+        // ── Pending Unlock Requests (real data) ────────────────────────────
+        $unlockRequests = GradeUnlockRequest::with(['requestedBy', 'sectionSubject.section', 'sectionSubject.subject'])
+            ->where('status', 'pending')
+            ->orderByDesc('created_at')
+            ->take(5)
+            ->get();
 
-        $notices = [
-            ['message' => 'Registrar office systems will undergo maintenance on May 10.', 'priority' => 'medium'],
-            ['message' => 'New verification workflow launched for enrollment certificates.', 'priority' => 'high'],
-            ['message' => 'Submit end-of-term processing reports to the dean’s office.', 'priority' => 'low'],
-        ];
+        $pendingRequests = $unlockRequests->map(fn($req) => [
+            'type'      => 'Grade Unlock Request',
+            'student'   => optional($req->requestedBy)->full_name
+                            ?? (optional($req->requestedBy)->first_name . ' ' . optional($req->requestedBy)->last_name),
+            'status'    => 'Waiting Approval',
+            'submitted' => $req->created_at->format('M d, Y'),
+            'due'       => $req->created_at->addDay()->format('M d, Y'),
+        ])->toArray();
 
-        // ── Announcements for Registrar ────────────────────────────────────
+        // Append pending grade complaints if there's still room
+        if (count($pendingRequests) < 5) {
+            $complaints = GradeComplaint::with(['student', 'sectionSubject.subject'])
+                ->where('status', 'pending')
+                ->orderByDesc('created_at')
+                ->take(5 - count($pendingRequests))
+                ->get();
+
+            foreach ($complaints as $c) {
+                $subjectName = optional(optional($c->sectionSubject)->subject)->title ?? 'Subject';
+                $pendingRequests[] = [
+                    'type'      => "Grade Complaint — {$subjectName}",
+                    'student'   => optional($c->student)->first_name . ' ' . optional($c->student)->last_name,
+                    'status'    => 'Under Review',
+                    'submitted' => $c->created_at->format('M d, Y'),
+                    'due'       => $c->created_at->addDays(3)->format('M d, Y'),
+                ];
+            }
+        }
+
+        // ── Deadlines: driven from high-priority announcements ─────────────
+        $deadlineAnnouncements = Announcement::active()
+            ->forRole('registrar')
+            ->whereIn('priority', ['high', 'urgent'])
+            ->orderByDesc('created_at')
+            ->take(3)
+            ->get();
+
+        $deadlines = $deadlineAnnouncements->map(fn($ann) => [
+            'title' => $ann->title,
+            'date'  => $ann->created_at->format('M d, Y'),
+            'note'  => $ann->message,
+        ])->toArray();
+
+        // ── Office Notices: medium/low announcements ───────────────────────
+        $noticeAnnouncements = Announcement::active()
+            ->forRole('registrar')
+            ->whereNotIn('priority', ['high', 'urgent'])
+            ->orderByDesc('created_at')
+            ->take(3)
+            ->get();
+
+        $notices = $noticeAnnouncements->map(fn($ann) => [
+            'message'  => $ann->message,
+            'priority' => $ann->priority ?? 'low',
+        ])->toArray();
+
+        // ── All announcements for the top banner ───────────────────────────
         $announcements = Announcement::active()
             ->forRole('registrar')
             ->orderByDesc('created_at')
             ->get();
 
-        // ── Quick Links and Resources ──────────────────────────────────────
+        // ── Quick Links ────────────────────────────────────────────────────
         $quickLinks = [
             [
-                'title' => 'Review Requests',
-                'description' => 'Process pending document and record requests',
-                'route' => 'admin.students.index',
+                'title'       => 'Review Requests',
+                'description' => 'Process pending unlock and complaint requests',
+                'route'       => 'registrar.grade-lock.index',
             ],
             [
-                'title' => 'Academic Calendar',
+                'title'       => 'Academic Calendar',
                 'description' => 'Manage academic year and grading quarter dates',
-                'route' => 'admin.academic-years.index',
+                'route'       => 'admin.academic-years.index',
             ],
             [
-                'title' => 'Enrollment Verifications',
-                'description' => 'Track enrollment certification progress',
-                'route' => 'admin.curriculum-mappings.index',
+                'title'       => 'Enrollment Verifications',
+                'description' => 'Track enrollment and prerequisite status',
+                'route'       => 'registrar.enrollment',
             ],
             [
-                'title' => 'Registrar Reports',
+                'title'       => 'Registrar Reports',
                 'description' => 'View office performance and audit summaries',
-                'route' => 'admin.audit.index',
+                'route'       => 'admin.audit.index',
             ],
         ];
-        
+
         return view('dashboard.registrar', compact(
             'user',
             'stats',
@@ -131,10 +191,9 @@ class RegistrarUserDashboardController extends Controller
     {
         $activeAcademicYear = AcademicYear::where('status', 'active')->first();
 
-        // Prerequisite check tool: look up a student by LRN
-        $checkStudent   = null;
-        $checkGrade     = null;
-        $unmetPrereqs   = null;
+        $checkStudent = null;
+        $checkGrade   = null;
+        $unmetPrereqs = null;
 
         if ($request->filled('check_lrn') && $activeAcademicYear) {
             $checkStudent = User::where('lrn', $request->input('check_lrn'))

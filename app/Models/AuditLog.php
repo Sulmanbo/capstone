@@ -66,6 +66,7 @@ class AuditLog extends Model
     public const REPORT_CARD_VERIFIED      = 'REPORT_CARD_VERIFIED';
     public const ENROLLMENT_CREATED        = 'ENROLLMENT_CREATED';
     public const ENROLLMENT_BLOCKED_PREREQUISITE = 'ENROLLMENT_BLOCKED_PREREQUISITE';
+    public const STUDENT_PROMOTED          = 'STUDENT_PROMOTED';
 
     // ══════════════════════════════════════════════════════════════════════
     // STATIC HELPER — use this everywhere instead of ::create() directly

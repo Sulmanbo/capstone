@@ -88,6 +88,49 @@
             @enderror
         </div>
 
+        <!-- Custom Grade Weights -->
+        @php $hasCustom = old('use_custom_weights', $subject->hasCustomWeights()); @endphp
+        <div class="mb-6 border border-gray-200 rounded-lg p-5">
+            <label class="flex items-center gap-3 cursor-pointer mb-4">
+                <input type="checkbox" name="use_custom_weights" id="use_custom_weights" value="1"
+                       {{ $hasCustom ? 'checked' : '' }}
+                       onchange="toggleWeights(this.checked)"
+                       class="w-4 h-4 text-blue-600 rounded">
+                <span class="text-sm font-semibold text-gray-700">Use Custom Grade Weights</span>
+                <span class="text-xs text-gray-400">(overrides global DepEd formula)</span>
+            </label>
+            <div id="weight-inputs" style="{{ $hasCustom ? '' : 'display:none;' }}">
+                <p class="text-xs text-gray-500 mb-3">Percentages must sum to exactly 100%.</p>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Written Works %</label>
+                        <input type="number" name="ww_weight" id="ww_weight"
+                               value="{{ old('ww_weight', $subject->ww_weight ?? 30) }}" min="1" max="98" step="0.01"
+                               oninput="updateWeightSum()"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Performance Tasks %</label>
+                        <input type="number" name="pt_weight" id="pt_weight"
+                               value="{{ old('pt_weight', $subject->pt_weight ?? 50) }}" min="1" max="98" step="0.01"
+                               oninput="updateWeightSum()"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Quarterly Assessment %</label>
+                        <input type="number" name="qa_weight" id="qa_weight"
+                               value="{{ old('qa_weight', $subject->qa_weight ?? 20) }}" min="1" max="98" step="0.01"
+                               oninput="updateWeightSum()"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500">
+                    </div>
+                </div>
+                <div id="weight-sum-display" class="mt-3 text-sm font-semibold"></div>
+            </div>
+            @error('weights')
+            <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+            @enderror
+        </div>
+
         <!-- Subject ID (Immutable) -->
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p class="text-sm text-gray-700">
@@ -106,4 +149,24 @@
         </div>
     </form>
 </div>
+@push('scripts')
+<script>
+function toggleWeights(enabled) {
+    document.getElementById('weight-inputs').style.display = enabled ? '' : 'none';
+    if (enabled) updateWeightSum();
+}
+function updateWeightSum() {
+    const ww  = parseFloat(document.getElementById('ww_weight').value) || 0;
+    const pt  = parseFloat(document.getElementById('pt_weight').value) || 0;
+    const qa  = parseFloat(document.getElementById('qa_weight').value) || 0;
+    const sum = Math.round((ww + pt + qa) * 100) / 100;
+    const el  = document.getElementById('weight-sum-display');
+    el.textContent = 'Current sum: ' + sum + '%';
+    el.style.color = Math.abs(sum - 100) < 0.01 ? '#16a34a' : '#dc2626';
+}
+document.addEventListener('DOMContentLoaded', function () {
+    if (document.getElementById('use_custom_weights').checked) updateWeightSum();
+});
+</script>
+@endpush
 @endsection

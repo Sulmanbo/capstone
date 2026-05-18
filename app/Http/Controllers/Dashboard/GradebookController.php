@@ -203,6 +203,83 @@ class GradebookController extends Controller
             ->with('success', "{$submittedGrades->count()} grade(s) finalized.");
     }
 
+    public function dropStudent(Request $request, SectionSubject $sectionSubject): RedirectResponse
+    {
+        $ss = $sectionSubject->load(['section', 'subject']);
+        $this->assertFacultyOwns($ss);
+
+        $quarter = $this->activeQuarter();
+        abort_unless($quarter, 422, 'No active grading quarter.');
+
+        $request->validate([
+            'enrollment_id' => 'required|exists:enrollments,id',
+            'drop_reason'   => 'required|string|min:10|max:500',
+        ]);
+
+        $grade = Grade::where('section_subject_id', $ss->id)
+            ->where('grading_quarter_id', $quarter->id)
+            ->where('enrollment_id', $request->enrollment_id)
+            ->first();
+
+        if (!$grade) {
+            // Create a placeholder grade row to record the drop
+            $grade = Grade::create([
+                'enrollment_id'      => $request->enrollment_id,
+                'section_subject_id' => $ss->id,
+                'grading_quarter_id' => $quarter->id,
+                'status'             => 'draft',
+            ]);
+        }
+
+        // Use DB update to bypass the locked immutability guard for drop fields
+        Grade::where('id', $grade->id)->update([
+            'dropped_at'  => now(),
+            'drop_reason' => $request->drop_reason,
+            'dropped_by'  => auth()->id(),
+        ]);
+
+        AuditLog::record('STUDENT_DROPPED', [
+            'enrollment_id'      => $request->enrollment_id,
+            'section_subject_id' => $ss->id,
+            'quarter_id'         => $quarter->id,
+            'reason'             => $request->drop_reason,
+        ]);
+
+        return redirect()->route('faculty.gradebook.show', $sectionSubject)
+            ->with('success', 'Student marked as dropped from this subject.');
+    }
+
+    public function reinstateStudent(Request $request, SectionSubject $sectionSubject): RedirectResponse
+    {
+        $ss = $sectionSubject->load(['section', 'subject']);
+        $this->assertFacultyOwns($ss);
+
+        $quarter = $this->activeQuarter();
+        abort_unless($quarter, 422, 'No active grading quarter.');
+
+        $request->validate([
+            'enrollment_id' => 'required|exists:enrollments,id',
+        ]);
+
+        Grade::where('section_subject_id', $ss->id)
+            ->where('grading_quarter_id', $quarter->id)
+            ->where('enrollment_id', $request->enrollment_id)
+            ->update([
+                'dropped_at'  => null,
+                'drop_reason' => null,
+                'dropped_by'  => null,
+            ]);
+
+        AuditLog::record('STUDENT_REINSTATED', [
+            'enrollment_id'      => $request->enrollment_id,
+            'section_subject_id' => $ss->id,
+            'quarter_id'         => $quarter->id,
+        ]);
+
+        return redirect()->route('faculty.gradebook.show', $sectionSubject)
+            ->with('success', 'Student reinstated successfully.');
+    }
+
     public function requestUnlock(Request $request, SectionSubject $sectionSubject): RedirectResponse
     {
         $ss = $sectionSubject->load(['section', 'subject']);
