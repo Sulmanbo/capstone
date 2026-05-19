@@ -17,209 +17,337 @@
   @if(auth()->check() && auth()->user()->role_id === '01')
   <style>
   /* ═══════════════════════════════════════════════════════════
-     STUDENT SIDEBAR — Clean professional student portal style
+     STUDENT SIDEBAR — Navy + yellow academic portal
+     Designed for the actual rhythm of a student day: dashboard
+     overview at the top, daily learning (schedule, subjects,
+     grades) in the middle, paperwork & finance below.
   ═══════════════════════════════════════════════════════════ */
 
   .enc-sidebar {
-    background: #1b2b3e;
-    border-right: 1px solid rgba(255,255,255,.06);
+    background:
+      linear-gradient(180deg, #0a1f44 0%, #07142c 100%);
+    border-right: 1px solid rgba(255, 255, 255, .04);
+    box-shadow: 4px 0 20px rgba(10, 31, 68, .25);
+  }
+
+  .enc-sidebar::before {
+    /* Yellow top accent stripe */
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #d97706 0%, #facc15 50%, #fbbf24 100%);
+    z-index: 1;
   }
 
   /* ── Brand ────────────────────────────────────────────── */
   .stu-brand {
-    padding: 20px 18px 16px;
+    padding: 22px 20px 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,.07);
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    position: relative;
   }
   .stu-brand__glow { display: none; }
   .stu-brand__logo {
-    width: 145px;
+    width: 160px;
     height: auto;
     display: block;
     mix-blend-mode: lighten;
-    filter: brightness(1.1);
+    filter: brightness(1.12) contrast(1.05);
   }
 
   /* ── School identity ──────────────────────────────────── */
   .stu-school {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 18px 13px;
-    border-bottom: 1px solid rgba(255,255,255,.07);
+    gap: 11px;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    background: rgba(0, 0, 0, .18);
   }
   .stu-school__seal {
-    width: 34px; height: 34px;
+    width: 38px; height: 38px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
     mix-blend-mode: lighten;
-    border: 1.5px solid rgba(255,255,255,.15);
+    border: 2px solid #fbbf24;
+    background: rgba(0, 0, 0, .3);
+    padding: 1px;
+    filter: brightness(1.05);
   }
   .stu-school__name {
-    font-size: .73rem;
-    font-weight: 600;
-    color: rgba(255,255,255,.8);
+    font-size: .76rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, .92);
     line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: -.005em;
   }
   .stu-school__sub {
-    font-size: .62rem;
-    color: rgba(255,255,255,.35);
+    font-size: .6rem;
+    color: #fbbf24;
     text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: .1em;
     margin-top: 2px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  /* ── Current term badge ──────────────────────────────── */
+  .stu-term {
+    margin: 14px 14px 6px;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, rgba(251, 191, 36, .12) 0%, rgba(251, 191, 36, .04) 100%);
+    border: 1px solid rgba(251, 191, 36, .22);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stu-term::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(251, 191, 36, .15), transparent 70%);
+    pointer-events: none;
+  }
+  .stu-term__icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: rgba(251, 191, 36, .18);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .stu-term__icon svg { width: 16px; height: 16px; color: #fbbf24; }
+  .stu-term__body { flex: 1; min-width: 0; position: relative; }
+  .stu-term__label {
+    font-size: .58rem;
+    font-weight: 700;
+    color: rgba(251, 191, 36, .9);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  .stu-term__value {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 1px;
+    letter-spacing: -.01em;
   }
 
   /* ── Nav container ────────────────────────────────────── */
   .stu-nav {
     flex: 1;
-    padding: 8px 10px;
+    padding: 8px 14px 12px;
     overflow-y: auto;
   }
-  .stu-nav::-webkit-scrollbar { width: 3px; }
-  .stu-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
+  .stu-nav::-webkit-scrollbar { width: 4px; }
+  .stu-nav::-webkit-scrollbar-thumb {
+    background: rgba(251, 191, 36, .2);
+    border-radius: 99px;
+  }
+  .stu-nav::-webkit-scrollbar-thumb:hover { background: rgba(251, 191, 36, .4); }
 
   /* ── Section labels ───────────────────────────────────── */
   .stu-section {
-    padding: 16px 8px 4px;
+    padding: 18px 6px 8px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
+  .stu-section:first-child { padding-top: 10px; }
   .stu-section__text {
-    font-size: .62rem;
-    font-weight: 700;
-    letter-spacing: .1em;
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .14em;
     text-transform: uppercase;
-    color: rgba(255,255,255,.3);
+    color: rgba(251, 191, 36, .75);
     white-space: nowrap;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
   }
   .stu-section__line {
     height: 1px;
     flex: 1;
-    background: rgba(255,255,255,.07);
+    background: linear-gradient(90deg, rgba(251, 191, 36, .22), transparent);
   }
 
   /* ── Nav items ────────────────────────────────────────── */
   .stu-nav-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 10px;
+    gap: 12px;
+    padding: 10px 12px;
     border-radius: 10px;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
     text-decoration: none;
-    color: rgba(255,255,255,.55);
-    font-size: .855rem;
+    color: rgba(255, 255, 255, .68);
+    font-size: .88rem;
     font-weight: 500;
-    transition: background .15s, color .15s;
+    transition: background .18s, color .18s, transform .18s;
     position: relative;
+    letter-spacing: -.005em;
   }
   .stu-nav-item:hover {
-    background: rgba(255,255,255,.07);
-    color: rgba(255,255,255,.9);
+    background: rgba(255, 255, 255, .07);
+    color: #fff;
+  }
+  .stu-nav-item:hover .stu-icon {
+    background: rgba(251, 191, 36, .18);
+    color: #fbbf24;
   }
   .stu-nav-item.active {
-    background: rgba(99,102,241,.2);
-    color: #fff;
+    background: linear-gradient(90deg,
+      rgba(251, 191, 36, .2) 0%,
+      rgba(251, 191, 36, .04) 100%);
+    color: #fbbf24;
     font-weight: 700;
-    border-left: 3px solid #818cf8;
-    padding-left: 7px;
+  }
+  .stu-nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 26px;
+    background: #fbbf24;
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 14px rgba(251, 191, 36, .65);
   }
   .stu-nav-item.active::after { display: none; }
+  .stu-nav-item.active .stu-icon {
+    background: rgba(251, 191, 36, .22);
+    color: #fbbf24;
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, .3);
+  }
 
-  /* ── Icon bubbles ─────────────────────────────────────── */
+  /* ── Icons (monochrome, theme-aligned) ────────────────── */
   .stu-icon {
-    width: 28px; height: 28px;
+    width: 30px; height: 30px;
     border-radius: 8px;
+    background: rgba(255, 255, 255, .04);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    color: rgba(255, 255, 255, .65);
+    transition: background .18s, color .18s, box-shadow .18s;
   }
-  .stu-icon svg { width: 14px; height: 14px; }
-  .stu-nav-item:hover .stu-icon,
-  .stu-nav-item.active .stu-icon { transform: none; box-shadow: none; }
+  .stu-icon svg { width: 15px; height: 15px; }
 
-  /* Soft, flat icon colors — no gradients, no glow */
-  .si-rose    { background: rgba(244, 63, 94, .18);  color: #f87171; }
-  .si-amber   { background: rgba(245,158, 11, .18);  color: #fbbf24; }
-  .si-emerald { background: rgba( 16,185,129, .18);  color: #34d399; }
-  .si-sky     { background: rgba( 56,189,248, .18);  color: #38bdf8; }
-  .si-violet  { background: rgba(167,139,250, .18);  color: #a78bfa; }
-  .si-yellow  { background: rgba(253,224, 71, .18);  color: #fde047; }
-  .si-teal    { background: rgba( 45,212,191, .18);  color: #2dd4bf; }
-  .si-orange  { background: rgba(251,146, 60, .18);  color: #fb923c; }
+  /* ── Badge on nav item (e.g. holds count, balance alert) ── */
+  .stu-nav-badge {
+    margin-left: auto;
+    background: #fbbf24;
+    color: #0a1f44;
+    font-size: .62rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    min-width: 22px;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .stu-nav-badge--danger { background: #ef4444; color: #fff; }
+  .stu-nav-badge--dot {
+    background: #ef4444;
+    min-width: 8px;
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, .25);
+  }
 
   /* ── User footer ──────────────────────────────────────── */
   .stu-footer {
-    padding: 10px 10px 12px;
-    border-top: 1px solid rgba(255,255,255,.07);
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, .06);
+    background: rgba(0, 0, 0, .15);
   }
   .stu-user-card {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 10px;
-    border-radius: 10px;
-    background: rgba(255,255,255,.05);
-    border: 1px solid rgba(255,255,255,.08);
-    transition: background .15s;
+    gap: 11px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .07);
+    transition: background .18s, border-color .18s;
+    position: relative;
   }
   .stu-user-card::before { display: none; }
-  .stu-user-card:hover { background: rgba(255,255,255,.09); }
+  .stu-user-card:hover {
+    background: rgba(255, 255, 255, .08);
+    border-color: rgba(251, 191, 36, .25);
+  }
 
   .stu-avatar {
-    width: 32px; height: 32px;
-    border-radius: 8px;
-    background: #2d5fa8;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
     display: flex; align-items: center; justify-content: center;
-    font-size: .76rem;
-    font-weight: 700;
-    color: #fff;
+    font-size: .82rem;
+    font-weight: 800;
+    color: #0a1f44;
     flex-shrink: 0;
     letter-spacing: -.5px;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, .35);
   }
   .stu-user-info { flex: 1; min-width: 0; }
   .stu-user-name {
-    font-size: .8rem;
-    font-weight: 600;
-    color: rgba(255,255,255,.85);
+    font-size: .82rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, .92);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: -.005em;
   }
   .stu-user-role {
-    font-size: .65rem;
-    color: rgba(255,255,255,.35);
+    font-size: .62rem;
+    color: #fbbf24;
     text-transform: uppercase;
-    letter-spacing: .06em;
+    letter-spacing: .08em;
     margin-top: 1px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
   }
   .stu-logout-btn {
-    width: 26px; height: 26px;
-    border-radius: 7px;
-    border: 1px solid rgba(255,255,255,.1);
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, .1);
     background: transparent;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     cursor: pointer;
-    transition: background .15s, border-color .15s;
+    transition: background .18s, border-color .18s;
   }
-  .stu-logout-btn:hover { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.25); }
-  .stu-logout-btn svg { width: 13px; height: 13px; color: rgba(255,255,255,.4); }
+  .stu-logout-btn:hover {
+    background: rgba(239, 68, 68, .15);
+    border-color: rgba(239, 68, 68, .35);
+  }
+  .stu-logout-btn svg {
+    width: 14px; height: 14px;
+    color: rgba(255, 255, 255, .55);
+    transition: color .18s;
+  }
   .stu-logout-btn:hover svg { color: #fca5a5; }
 
   /* ── Glassmorphic top header for students ─────────────── */
   .enc-header {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    background: rgba(255,255,255,.92) !important;
+    background: rgba(255, 255, 255, .94) !important;
   }
   </style>
   @endif
@@ -373,8 +501,16 @@
 
   @if(auth()->user()->role_id === '01')
   {{-- ╔══════════════════════════════════════╗
-       ║   STUDENT SIDEBAR — Aurora Dark      ║
+       ║   STUDENT SIDEBAR                    ║
+       ║   Organized by the rhythm of a       ║
+       ║   student's day: Overview → Learning ║
+       ║   → Records → Finance → Account      ║
        ╚══════════════════════════════════════╝ --}}
+  @php
+    // School year (June-onwards = current year → next year; else previous → current)
+    $sy_start = (int) date('n') >= 6 ? (int) date('Y') : (int) date('Y') - 1;
+    $sy_label = $sy_start . '–' . ($sy_start + 1);
+  @endphp
 
     {{-- Brand --}}
     <a href="{{ route('student.dashboard') }}" class="stu-brand" style="text-decoration:none;">
@@ -385,82 +521,79 @@
     {{-- School identity --}}
     <div class="stu-school">
       <img src="{{ asset('images/logo.png') }}" alt="Phil. Academy of Sakya" class="stu-school__seal">
-      <div>
+      <div style="min-width:0;flex:1;">
         <div class="stu-school__name">Phil. Academy of Sakya</div>
-        <div class="stu-school__sub">Student Portal · {{ date('Y') }}</div>
+        <div class="stu-school__sub">Student Portal</div>
+      </div>
+    </div>
+
+    {{-- Current term indicator --}}
+    <div class="stu-term">
+      <div class="stu-term__icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.636 50.636 0 00-2.658-.813A59.906 59.906 0 0112 3.493a59.903 59.903 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/>
+        </svg>
+      </div>
+      <div class="stu-term__body">
+        <div class="stu-term__label">School Year</div>
+        <div class="stu-term__value">{{ $sy_label }}</div>
       </div>
     </div>
 
     {{-- Navigation --}}
     <nav class="stu-nav">
 
-      {{-- My Account section --}}
+      {{-- ───── OVERVIEW ───── --}}
       <div class="stu-section">
-        <span class="stu-section__text">My Account</span>
+        <span class="stu-section__text">Overview</span>
         <div class="stu-section__line"></div>
       </div>
 
       <a href="{{ route('student.dashboard') }}"
          class="stu-nav-item {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
-        <span class="stu-icon si-rose">
+        <span class="stu-icon">
+          {{-- Home --}}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
           </svg>
         </span>
-        User Profile
+        Dashboard
       </a>
 
-      <a href="{{ route('student.academic-holds') }}"
-         class="stu-nav-item {{ request()->routeIs('student.academic-holds') ? 'active' : '' }}">
-        <span class="stu-icon si-amber">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
-          </svg>
-        </span>
-        Academic Holds
-      </a>
-
-      <a href="{{ route('student.account-balance') }}"
-         class="stu-nav-item {{ request()->routeIs('student.account-balance') ? 'active' : '' }}">
-        <span class="stu-icon si-emerald">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
-          </svg>
-        </span>
-        Account Balance
-      </a>
-
-      {{-- Academics section --}}
+      {{-- ───── MY LEARNING ───── --}}
       <div class="stu-section">
-        <span class="stu-section__text">Academics</span>
+        <span class="stu-section__text">My Learning</span>
         <div class="stu-section__line"></div>
       </div>
 
-      <a href="{{ route('student.admission-documents') }}"
-         class="stu-nav-item {{ request()->routeIs('student.admission-documents') ? 'active' : '' }}">
-        <span class="stu-icon si-sky">
+      <a href="{{ route('student.schedule') }}"
+         class="stu-nav-item {{ request()->routeIs('student.schedule') ? 'active' : '' }}">
+        <span class="stu-icon">
+          {{-- Calendar / Schedule --}}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/>
           </svg>
         </span>
-        Admission Documents
+        Class Schedule
       </a>
 
       <a href="{{ route('student.course-offerings') }}"
          class="stu-nav-item {{ request()->routeIs('student.course-offerings') ? 'active' : '' }}">
-        <span class="stu-icon si-violet">
+        <span class="stu-icon">
+          {{-- Book / Subjects --}}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
           </svg>
         </span>
-        Course Offerings
+        My Subjects
       </a>
 
       <a href="{{ route('student.report-card') }}"
          class="stu-nav-item {{ request()->routeIs('student.report-card') ? 'active' : '' }}">
-        <span class="stu-icon si-yellow">
+        <span class="stu-icon">
+          {{-- Chart bars / Grades --}}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
           </svg>
         </span>
         Grade Report
@@ -468,25 +601,61 @@
 
       <a href="{{ route('student.program-curriculum') }}"
          class="stu-nav-item {{ request()->routeIs('student.program-curriculum') ? 'active' : '' }}">
-        <span class="stu-icon si-teal">
+        <span class="stu-icon">
+          {{-- Academic cap / Curriculum --}}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/>
           </svg>
         </span>
-        Program Curriculum
+        Curriculum
       </a>
 
-      <a href="{{ route('student.schedule') }}"
-         class="stu-nav-item {{ request()->routeIs('student.schedule') ? 'active' : '' }}">
-        <span class="stu-icon si-orange">
+      {{-- ───── RECORDS ───── --}}
+      <div class="stu-section">
+        <span class="stu-section__text">Records</span>
+        <div class="stu-section__line"></div>
+      </div>
+
+      <a href="{{ route('student.admission-documents') }}"
+         class="stu-nav-item {{ request()->routeIs('student.admission-documents') ? 'active' : '' }}">
+        <span class="stu-icon">
+          {{-- Document --}}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5m-9-6h.008v.008H12V12zm0 3h.008v.008H12v-.008zm0 3h.008v.008H12v-.008zM9 12h.008v.008H9V12zm0 3h.008v.008H9v-.008zm0 3h.008v.008H9v-.008zm3-6h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
           </svg>
         </span>
-        Schedule & Assessment
+        Documents
       </a>
 
-      {{-- Settings --}}
+      <a href="{{ route('student.academic-holds') }}"
+         class="stu-nav-item {{ request()->routeIs('student.academic-holds') ? 'active' : '' }}">
+        <span class="stu-icon">
+          {{-- Shield / Hold --}}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </span>
+        Academic Holds
+      </a>
+
+      {{-- ───── FINANCE ───── --}}
+      <div class="stu-section">
+        <span class="stu-section__text">Finance</span>
+        <div class="stu-section__line"></div>
+      </div>
+
+      <a href="{{ route('student.account-balance') }}"
+         class="stu-nav-item {{ request()->routeIs('student.account-balance') ? 'active' : '' }}">
+        <span class="stu-icon">
+          {{-- Wallet / Balance --}}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/>
+          </svg>
+        </span>
+        Account Balance
+      </a>
+
+      {{-- ───── ACCOUNT ───── --}}
       <div class="stu-section">
         <span class="stu-section__text">Account</span>
         <div class="stu-section__line"></div>
@@ -494,9 +663,11 @@
 
       <a href="{{ route('student.settings.index') }}"
          class="stu-nav-item {{ request()->routeIs('student.settings.*') ? 'active' : '' }}">
-        <span class="stu-icon si-violet">
+        <span class="stu-icon">
+          {{-- Cog / Settings --}}
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
         </span>
         Settings
