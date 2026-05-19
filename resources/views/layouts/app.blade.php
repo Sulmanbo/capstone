@@ -796,22 +796,6 @@
 
       <div class="enc-sidebar__section-label" style="margin-top:8px;">Academics</div>
 
-      <a href="{{ route('admin.applicants.index') }}"
-         class="enc-nav-item {{ request()->routeIs('admin.applicants.*') ? 'active' : '' }}">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109z"/>
-        </svg>
-        Applicants
-      </a>
-
-      <a href="{{ route('admin.entrance-tests.index') }}"
-         class="enc-nav-item {{ request()->routeIs('admin.entrance-tests.*') ? 'active' : '' }}">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        Entrance Tests
-      </a>
-
       <a href="{{ route('admin.users.index') }}"
          class="enc-nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
