@@ -18,7 +18,6 @@ use App\Http\Controllers\Admin\AcademicYearController;
 use App\Http\Controllers\Admin\GradingQuarterController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\CurriculumMappingController;
-use App\Http\Controllers\Admin\EntranceTestController;
 use App\Http\Controllers\Settings\AdminSettingsController;
 use App\Http\Controllers\Settings\StudentSettingsController;
 use App\Http\Controllers\Settings\FacultySettingsController;
@@ -58,8 +57,6 @@ Route::get('/report-card/{student}/download', [\App\Http\Controllers\ReportCardC
 Route::get('/verify/{token}', [\App\Http\Controllers\ReportCardController::class, 'verify'])
     ->name('report-card.verify');
 
-// ── Public Applicant Onboarding — REMOVED (out of scope: grading management only) ──
-
 // ── Mandatory First-Login Password Reset ──────────────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get( '/password/reset-required', [ForcePasswordResetController::class, 'show'])  ->name('password.force-reset');
@@ -90,7 +87,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::prefix('students')->name('students.')->group(function () {
         Route::get('/',          [StudentController::class,       'index'])    ->name('index');
         Route::get('/import',    [\App\Http\Controllers\Admin\StudentImportController::class, 'showForm'])->name('import');
-        Route::post('/import',   [\App\Http\Controllers\Admin\StudentImportController::class, 'import'])  ->name('import');
+        Route::post('/import',   [\App\Http\Controllers\Admin\StudentImportController::class, 'import'])  ->name('import.submit');
         Route::get('/import/template', function () {
             $csv = implode("\n", [
                 'first_name,last_name,email,lrn,grade_level,section_name,gender,phone,address',
@@ -116,9 +113,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     // ── Registrar Module — Dashboard ──────────────────────────────────────
     Route::get('/registrar-dashboard', [RegistrarDashboardController::class, 'index'])->name('registrar-dashboard');
-
-    // ── Applicant Management — REMOVED (out of scope: grading management only) ──
-    // ── Entrance Test Results   — REMOVED (out of scope: grading management only) ──
 
     // ── Academic Years Management ─────────────────────────────────────────
     Route::prefix('academic-years')->name('academic-years.')->group(function () {

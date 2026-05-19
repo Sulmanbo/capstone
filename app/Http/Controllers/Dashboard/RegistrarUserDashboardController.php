@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Announcement;
-use App\Models\Applicant;
 use App\Models\Enrollment;
+use App\Models\Grade;
 use App\Models\GradeComplaint;
 use App\Models\GradeUnlockRequest;
 use App\Models\GradingQuarter;
@@ -56,7 +56,16 @@ class RegistrarUserDashboardController extends Controller
                 ->count()
             : 0;
 
-        $applicantsInReview = Applicant::whereIn('status', ['under_review', 'for_test', 'tested'])->count();
+        // Honor-roll count = locked, non-dropped grades >= 90 in the active quarter
+        $honorStudents = 0;
+        if ($activeQuarter) {
+            $honorStudents = Grade::where('grading_quarter_id', $activeQuarter->id)
+                ->where('status', 'locked')
+                ->whereNull('dropped_at')
+                ->where('final_grade', '>=', 90)
+                ->distinct('student_id')
+                ->count('student_id');
+        }
 
         $stats = [
             'active_academic_year'     => $activeAcademicYear,
@@ -64,7 +73,7 @@ class RegistrarUserDashboardController extends Controller
             'pending_requests'         => $pendingTotal,
             'completed_requests'       => $completedTotal,
             'enrollment_verifications' => $enrollmentCount,
-            'documents_in_review'      => $applicantsInReview,
+            'honor_students'           => $honorStudents,
         ];
 
         // ── Pending Unlock Requests (real data) ────────────────────────────
@@ -154,9 +163,9 @@ class RegistrarUserDashboardController extends Controller
                 'route'       => 'registrar.enrollment',
             ],
             [
-                'title'       => 'Registrar Reports',
-                'description' => 'View office performance and audit summaries',
-                'route'       => 'admin.audit.index',
+                'title'       => 'Aggregate Reports',
+                'description' => 'Honor roll and academic intervention lists',
+                'route'       => 'registrar.reports.aggregate',
             ],
         ];
 
