@@ -23,8 +23,8 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+        linear-gradient(rgba(251, 191, 36, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(251, 191, 36, .04) 1px, transparent 1px);
       background-size: 40px 40px;
       pointer-events: none;
     }
@@ -42,8 +42,8 @@
     .reset-card::before {
       content: '';
       display: block;
-      height: 4px;
-      background: linear-gradient(90deg, var(--accent-amber) 0%, var(--danger) 100%);
+      height: 5px;
+      background: linear-gradient(90deg, var(--yellow-bright) 0%, var(--yellow-deep) 100%);
     }
     .reset-header {
       padding: 28px 36px 20px;
@@ -76,7 +76,7 @@
       font-size: .875rem; color: var(--gray-700); font-family: var(--font-body);
       background: white; outline: none; transition: border-color .15s, box-shadow .15s;
     }
-    .reset-input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    .reset-input:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(251, 191, 36, .2); }
     .reset-input.is-error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(220,38,38,.08); }
     .reset-input-wrap { position: relative; }
     .reset-input-wrap .toggle-icon {
@@ -102,12 +102,19 @@
     .pw-rule.met .cross-icon { display:none; }
 
     .reset-submit {
-      width: 100%; height: 46px; background: var(--navy); color: white;
-      border: none; border-radius: var(--radius-md); font-size: .9rem; font-weight: 700;
-      font-family: var(--font-body); cursor: pointer; transition: background .15s;
+      width: 100%; height: 48px;
+      background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
+      color: white; border: 1.5px solid var(--navy); border-radius: var(--radius-md);
+      font-size: .92rem; font-weight: 700;
+      font-family: var(--font-body); cursor: pointer; transition: all .2s;
       display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 4px 10px rgba(10, 31, 68, .2);
     }
-    .reset-submit:hover { background: var(--navy-light); }
+    .reset-submit:hover {
+      background: linear-gradient(180deg, var(--navy-hover) 0%, var(--navy-light) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 8px 16px rgba(10, 31, 68, .3);
+    }
     .reset-submit svg { width: 16px; height: 16px; }
     .reset-footer {
       padding: 12px 36px 18px; text-align:center;
@@ -257,7 +264,7 @@
   function toggleField(id, icon) {
     const f = document.getElementById(id);
     f.type = f.type === 'password' ? 'text' : 'password';
-    icon.style.color = f.type === 'text' ? 'var(--accent-blue)' : '';
+    icon.style.color = f.type === 'text' ? 'var(--yellow-deep)' : '';
   }
 
   function checkRules(val) {

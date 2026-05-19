@@ -24,8 +24,8 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+        linear-gradient(rgba(251, 191, 36, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(251, 191, 36, .04) 1px, transparent 1px);
       background-size: 40px 40px;
       pointer-events: none;
     }
@@ -45,8 +45,11 @@
     .fp-card::before {
       content: '';
       display: block;
-      height: 4px;
-      background: linear-gradient(90deg, var(--navy) 0%, var(--accent-blue) 60%, var(--accent-sky) 100%);
+      height: 5px;
+      background: linear-gradient(90deg,
+        var(--yellow-dark) 0%,
+        var(--yellow-bright) 50%,
+        var(--yellow) 100%);
     }
 
     .fp-header {
@@ -63,15 +66,15 @@
     }
 
     .fp-header-icon {
-      width: 40px; height: 40px;
-      background: #eff6ff;
-      border: 1.5px solid #bfdbfe;
+      width: 42px; height: 42px;
+      background: var(--yellow-tint);
+      border: 1.5px solid var(--yellow);
       border-radius: var(--radius-md);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
 
-    .fp-header-icon svg { width: 20px; height: 20px; color: var(--accent-blue); }
+    .fp-header-icon svg { width: 20px; height: 20px; color: var(--yellow-deep); }
 
     .fp-logos {
       display: flex;
@@ -145,8 +148,8 @@
     }
 
     .fp-input:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, .2);
     }
 
     .fp-input.is-error {
@@ -167,23 +170,29 @@
 
     .fp-submit {
       width: 100%;
-      height: 46px;
-      background: var(--navy);
+      height: 48px;
+      background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
       color: white;
-      border: none;
+      border: 1.5px solid var(--navy);
       border-radius: var(--radius-md);
-      font-size: .9rem;
+      font-size: .92rem;
       font-weight: 700;
       font-family: var(--font-body);
       cursor: pointer;
-      transition: background .15s;
+      transition: all .2s;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 4px 10px rgba(10, 31, 68, .2);
     }
 
-    .fp-submit:hover { background: var(--navy-light); }
+    .fp-submit:hover {
+      background: linear-gradient(180deg, var(--navy-hover) 0%, var(--navy-light) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 8px 16px rgba(10, 31, 68, .3);
+    }
+
     .fp-submit svg { width: 16px; height: 16px; }
 
     .fp-back {
@@ -191,13 +200,14 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      margin-top: 16px;
-      font-size: .8rem;
-      color: var(--gray-400);
+      margin-top: 18px;
+      font-size: .82rem;
+      color: var(--gray-500);
       transition: color .15s;
+      font-weight: 600;
     }
 
-    .fp-back:hover { color: var(--accent-blue); }
+    .fp-back:hover { color: var(--yellow-deep); }
     .fp-back svg { width: 14px; height: 14px; }
 
     .fp-footer {

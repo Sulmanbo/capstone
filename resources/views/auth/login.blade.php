@@ -12,7 +12,10 @@
   <style>
     /* ── Login Page Overrides ───────────────────── */
     body {
-      background: var(--navy-dark);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(251, 191, 36, .08), transparent 60%),
+        radial-gradient(900px 500px at 90% 90%, rgba(28, 58, 110, .35), transparent 60%),
+        var(--navy-dark);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -26,30 +29,48 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
-      background-size: 40px 40px;
+        linear-gradient(rgba(251, 191, 36, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(251, 191, 36, .04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    /* Floating yellow orb accents */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -120px;
+      right: -120px;
+      width: 360px;
+      height: 360px;
+      background: radial-gradient(circle, rgba(251, 191, 36, .12) 0%, transparent 70%);
       pointer-events: none;
     }
 
     .login-card {
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
       background: white;
-      border-radius: 16px;
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 24px 60px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.3);
-      animation: fadeUp .35s ease both;
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, .5),
+        0 12px 24px rgba(0, 0, 0, .3),
+        0 0 0 1px rgba(251, 191, 36, .15);
+      animation: fadeUp .4s ease both;
       position: relative;
       z-index: 1;
     }
 
-    /* Top accent bar */
+    /* Top accent bar — yellow */
     .login-card::before {
       content: '';
       display: block;
-      height: 4px;
-      background: linear-gradient(90deg, var(--navy) 0%, var(--accent-blue) 60%, var(--accent-sky) 100%);
+      height: 5px;
+      background: linear-gradient(90deg,
+        var(--yellow-dark) 0%,
+        var(--yellow-bright) 50%,
+        var(--yellow) 100%);
     }
 
     .login-header {
@@ -138,8 +159,8 @@
     }
 
     .login-input:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, .2);
     }
 
     .login-input.is-error {
@@ -195,39 +216,57 @@
 
     .login-remember input[type="checkbox"] {
       width: 14px; height: 14px;
-      accent-color: var(--accent-blue);
+      accent-color: var(--yellow-dark);
       cursor: pointer;
     }
 
     .login-forgot {
-      color: var(--accent-blue);
-      font-weight: 600;
+      color: var(--yellow-deep);
+      font-weight: 700;
       transition: color .15s;
     }
 
-    .login-forgot:hover { color: #1d4ed8; }
+    .login-forgot:hover { color: var(--navy); }
 
     .login-submit {
       width: 100%;
-      height: 46px;
-      background: var(--navy);
+      height: 48px;
+      background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
       color: white;
-      border: none;
+      border: 1.5px solid var(--navy);
       border-radius: var(--radius-md);
-      font-size: .9rem;
+      font-size: .92rem;
       font-weight: 700;
       font-family: var(--font-body);
       cursor: pointer;
-      transition: background .15s, transform .1s;
+      transition: all .2s;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       letter-spacing: .01em;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 4px 10px rgba(10, 31, 68, .25);
+      position: relative;
+      overflow: hidden;
     }
 
-    .login-submit:hover  { background: var(--navy-light); }
-    .login-submit:active { transform: scale(.99); }
+    .login-submit::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(251, 191, 36, .25), transparent);
+      transition: left .6s;
+    }
+
+    .login-submit:hover {
+      background: linear-gradient(180deg, var(--navy-hover) 0%, var(--navy-light) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 8px 16px rgba(10, 31, 68, .35);
+    }
+
+    .login-submit:hover::before { left: 100%; }
+    .login-submit:active { transform: translateY(0); }
 
     .login-submit svg { width: 16px; height: 16px; }
 
@@ -262,9 +301,9 @@
       letter-spacing: .04em;
     }
 
-    .login-sec-badge--sha { background: #eff6ff; color: var(--accent-blue); }
+    .login-sec-badge--sha { background: var(--navy-soft); color: var(--navy); }
     .login-sec-badge--aes { background: var(--success-bg); color: var(--success); }
-    .login-sec-badge--ra  { background: var(--warning-bg); color: var(--warning); }
+    .login-sec-badge--ra  { background: var(--yellow-tint); color: var(--yellow-deep); }
 
     /* Alert for lockout / general errors */
     .login-alert {
@@ -317,9 +356,9 @@
       </div>
     @endif
 
-    <div class="mb-4 rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:.78rem;color:#1e40af;">
-        Multiple failed attempts will temporarily lock your account for 10 minutes.
-        If you can't sign in, use <a href="{{ route('password.request') }}" style="text-decoration:underline;font-weight:600;">Forgot Password</a>.
+    <div style="background:var(--yellow-tint);border:1px solid var(--yellow);border-left:4px solid var(--yellow-dark);border-radius:8px;padding:11px 14px;margin-bottom:18px;font-size:.78rem;color:var(--navy);line-height:1.5;">
+        <strong>Heads-up:</strong> Multiple failed attempts will temporarily lock your account for 10 minutes.
+        If you can't sign in, use <a href="{{ route('password.request') }}" style="text-decoration:underline;font-weight:700;color:var(--yellow-deep);">Forgot Password</a>.
     </div>
 
     <form method="POST" action="{{ route('login') }}" autocomplete="off">
