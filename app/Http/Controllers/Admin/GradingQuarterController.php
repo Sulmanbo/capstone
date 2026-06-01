@@ -21,7 +21,7 @@ class GradingQuarterController extends Controller
     public function index(Request $request)
     {
         $status = $request->input('status');
-        $academicYearId = $request->input('academic_year_id');
+        $academicYearId = $request->input('academic_year_id') ?? AcademicYear::currentId();
         
         $query = GradingQuarter::with('academicYear');
         
@@ -47,7 +47,7 @@ class GradingQuarterController extends Controller
      */
     public function create(Request $request)
     {
-        $academicYearId = $request->input('academic_year_id');
+        $academicYearId = $request->input('academic_year_id') ?? AcademicYear::currentId();
         $academicYear = $academicYearId ? AcademicYear::findOrFail($academicYearId) : null;
         $academicYears = AcademicYear::orderBy('year_label', 'desc')->get();
         

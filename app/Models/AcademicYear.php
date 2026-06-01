@@ -99,6 +99,30 @@ class AcademicYear extends Model
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
+
+    /**
+     * Resolve the "working" academic year used across the app.
+     *
+     * Priority:
+     *   1. The year the user picked in the global header selector (session).
+     *   2. The most recent active year.
+     *   3. The most recent year overall.
+     *
+     * Returns null only when no academic years exist at all.
+     */
+    public static function currentId(): ?int
+    {
+        $sessionId = session('active_academic_year_id');
+        if ($sessionId && static::whereKey($sessionId)->exists()) {
+            return (int) $sessionId;
+        }
+
+        $resolved = static::where('status', 'active')->orderByDesc('start_date')->first()
+            ?? static::orderByDesc('start_date')->first();
+
+        return $resolved?->id;
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

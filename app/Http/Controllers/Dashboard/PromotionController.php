@@ -29,7 +29,7 @@ class PromotionController extends Controller
         $selectedYear  = null;
         $selectedSection = null;
 
-        $yearId    = $request->input('academic_year_id');
+        $yearId    = $request->input('academic_year_id') ?? AcademicYear::currentId();
         $sectionId = $request->input('section_id');
 
         if ($yearId) {

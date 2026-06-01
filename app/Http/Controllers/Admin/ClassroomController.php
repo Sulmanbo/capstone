@@ -20,7 +20,7 @@ class ClassroomController extends Controller
     public function index(Request $request)
     {
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
-        $yearId = $request->input('academic_year_id') ?? optional($academicYears->first())->id;
+        $yearId = $request->input('academic_year_id') ?? AcademicYear::currentId();
 
         $classrooms = Classroom::query()
             ->with('academicYear')

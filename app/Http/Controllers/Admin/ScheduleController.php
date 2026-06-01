@@ -49,7 +49,7 @@ class ScheduleController extends Controller
     {
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
 
-        $yearId       = $request->input('academic_year_id');
+        $yearId       = $request->input('academic_year_id') ?? AcademicYear::currentId();
         $sectionId    = $request->input('section_id');
         $facultyId    = $request->input('faculty_id');
         $statusFilter = $request->input('status');
@@ -85,7 +85,7 @@ class ScheduleController extends Controller
     public function create(Request $request)
     {
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
-        $yearId        = $request->input('academic_year_id');
+        $yearId        = $request->input('academic_year_id') ?? AcademicYear::currentId();
 
         $sections   = collect();
         $classrooms = collect();

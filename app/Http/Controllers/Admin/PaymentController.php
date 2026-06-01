@@ -21,7 +21,7 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
-        $yearId = $request->input('academic_year_id') ?? optional(AcademicYear::where('status', 'active')->first())->id;
+        $yearId = $request->input('academic_year_id') ?? AcademicYear::currentId();
         $status = $request->input('status');
 
         $payments = Payment::query()
@@ -96,7 +96,7 @@ class PaymentController extends Controller
     public function fees(Request $request)
     {
         $academicYears = AcademicYear::orderByDesc('start_date')->get();
-        $yearId = $request->input('academic_year_id') ?? optional(AcademicYear::where('status', 'active')->first())->id;
+        $yearId = $request->input('academic_year_id') ?? AcademicYear::currentId();
 
         $fees = $yearId
             ? EnrollmentFee::where('academic_year_id', $yearId)->orderBy('grade_level')->get()

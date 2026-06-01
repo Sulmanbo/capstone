@@ -241,6 +241,36 @@
     --sd-shadow:  0 4px 24px rgba(15,23,42,.07);
   }
 
+  /* ── Global academic-year picker (header) ─────────────── */
+  .enc-year-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--yellow-pale, #fefce8);
+    border: 1.5px solid var(--yellow, #fbbf24);
+    border-radius: 10px;
+    padding: 5px 10px;
+    transition: box-shadow .18s ease, border-color .18s ease;
+  }
+  .enc-year-picker:hover { box-shadow: 0 0 0 3px rgba(251,191,36,.18); }
+  .enc-year-picker__icon { width: 16px; height: 16px; color: var(--yellow-dark, #d97706); flex-shrink: 0; }
+  .enc-year-picker select {
+    border: none;
+    background: transparent;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--navy, #0a1f44);
+    cursor: pointer;
+    outline: none;
+    padding-right: 2px;
+    max-width: 220px;
+  }
+  .enc-year-picker select:focus { outline: none; }
+  @media (max-width: 640px) {
+    .enc-year-picker__icon { display: none; }
+    .enc-year-picker select { max-width: 140px; }
+  }
+
   /* ── Announcements ─────────────────────────────────────────── */
   .sd-announce-wrap { margin-bottom: 24px; }
   .sd-announce-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -956,6 +986,23 @@
       </div>
 
       <div class="enc-header__right">
+        {{-- Global Academic-Year selector (staff only) --}}
+        @if(auth()->user()->role_id !== '01' && isset($globalAcademicYears) && $globalAcademicYears->isNotEmpty())
+        <form method="POST" action="{{ route('academic-year.switch') }}" id="enc-year-form" class="enc-year-picker" title="Working academic year">
+          @csrf
+          <svg class="enc-year-picker__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5"/>
+          </svg>
+          <select name="academic_year_id" onchange="document.getElementById('enc-year-form').submit()" aria-label="Academic year">
+            @foreach($globalAcademicYears as $ay)
+              <option value="{{ $ay->id }}" {{ (int)$globalActiveYearId === (int)$ay->id ? 'selected' : '' }}>
+                S.Y. {{ $ay->year_label }}{{ $ay->status === 'active' ? ' • active' : '' }}
+              </option>
+            @endforeach
+          </select>
+        </form>
+        @endif
+
         <div class="enc-header__time" id="enc-clock">--:-- --</div>
 
         {{-- Notifications --}}

@@ -60,6 +60,11 @@ Route::get('/verify/{token}', [\App\Http\Controllers\ReportCardController::class
 
 // ── Public Applicant Onboarding — REMOVED (out of scope: grading management only) ──
 
+// ── Global Academic-Year Context (header selector, all roles) ──────────────
+Route::post('/academic-year/switch', [\App\Http\Controllers\AcademicYearContextController::class, 'switch'])
+    ->middleware('auth')
+    ->name('academic-year.switch');
+
 // ── Mandatory First-Login Password Reset ──────────────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get( '/password/reset-required', [ForcePasswordResetController::class, 'show'])  ->name('password.force-reset');

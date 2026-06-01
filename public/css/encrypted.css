@@ -135,7 +135,7 @@ input, select, textarea, button { font-family: var(--font-body); }
 /* ─── Sidebar ─────────────────────────────────────────── */
 .enc-sidebar {
   width: var(--sidebar-w);
-  min-height: 100vh;
+  height: 100vh;
   background:
     linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%);
   display: flex;
