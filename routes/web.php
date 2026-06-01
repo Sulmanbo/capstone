@@ -251,6 +251,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/registrar/grades',         [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'grades'])        ->name('registrar.grades');
         Route::get('/registrar/calendar',       [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'calendar'])      ->name('registrar.calendar');
         Route::get('/registrar/announcements',  [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'announcements']) ->name('registrar.announcements');
+        Route::post('/registrar/announcements', [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'postAnnouncement'])->name('registrar.announcements.store');
 
         // Enrollment (with prerequisite enforcement)
         Route::post('/registrar/enroll', [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'enroll'])->name('registrar.enroll');
@@ -282,6 +283,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/faculty/attendance',    [App\Http\Controllers\Dashboard\AttendanceController::class,        'store'])  ->name('faculty.attendance.store');
         Route::get('/faculty/my-schedule',    [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'mySchedule'])  ->name('faculty.my-schedule');
         Route::get('/faculty/announcements',  [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'announcements'])->name('faculty.announcements');
+        Route::post('/faculty/announcements', [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'postAnnouncement'])->name('faculty.announcements.store');
 
         // Grade entry workflow
         Route::get( '/faculty/gradebook/{sectionSubject}',                     [App\Http\Controllers\Dashboard\GradebookController::class, 'show'])          ->name('faculty.gradebook.show');

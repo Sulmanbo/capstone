@@ -252,6 +252,23 @@ class RegistrarUserDashboardController extends Controller
         return view('dashboard.registrar-announcements', compact('announcements'));
     }
 
+    public function postAnnouncement(Request $request)
+    {
+        $data = $request->validate([
+            'title'           => 'required|string|max:255',
+            'message'         => 'required|string|max:2000',
+            'priority'        => 'required|in:high,medium,low',
+            'target_audience' => 'required|in:all,student,faculty,registrar',
+        ]);
+
+        $data['created_by'] = auth()->id();
+        $data['is_active']  = true;
+
+        Announcement::create($data);
+
+        return back()->with('success', 'Announcement posted successfully.');
+    }
+
     public function enroll(Request $request)
     {
         $request->validate([
