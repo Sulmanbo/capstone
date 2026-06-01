@@ -78,14 +78,6 @@ class FacultyDashboardController extends Controller
         return view('dashboard.faculty-gradebook', compact('user', 'allSchedules'));
     }
 
-    public function attendance(Request $request)
-    {
-        $user         = auth()->user();
-        $allSchedules = $this->loadSchedules($user->id);
-
-        return view('dashboard.faculty-attendance', compact('user', 'allSchedules'));
-    }
-
     public function mySchedule(Request $request)
     {
         $user               = auth()->user();

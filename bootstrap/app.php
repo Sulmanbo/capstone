@@ -38,4 +38,34 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        // ── Rate-limit threat event (FRS §Threat Monitoring) ───────────────
+        // Every 429 response from Laravel's throttle middleware emits both an
+        // audit log entry and a threat event so administrators can see when
+        // limits are being hit (signal of credential-stuffing, scraping, etc.)
+        $exceptions->reportable(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e) {
+            try {
+                $request = request();
+                \App\Models\AuditLog::record(
+                    \App\Models\AuditLog::RATE_LIMIT_EXCEEDED,
+                    [
+                        'route'  => $request->path(),
+                        'method' => $request->method(),
+                        'ip'     => $request->ip(),
+                    ]
+                );
+                \App\Models\ThreatEvent::record(
+                    'rate_limit_exceeded',
+                    'medium',
+                    'Rate Limit Exceeded',
+                    "Throttle hit on {$request->method()} /{$request->path()} from {$request->ip()}",
+                    auth()->id(),
+                    $request->path()
+                );
+            } catch (\Throwable $t) {
+                // never let logging break error response
+                \Log::warning('rate-limit threat-event log failed: ' . $t->getMessage());
+            }
+            return false; // don't stop default reporting
+        });
+
     })->create();

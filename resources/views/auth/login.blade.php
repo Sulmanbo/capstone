@@ -340,6 +340,12 @@
     </div>
     <div class="login-title">Academic Management Portal</div>
     <div class="login-subtitle">Philippine Academy of Sakya</div>
+    <div style="margin-top:14px;">
+      <button type="button" onclick="document.getElementById('aboutModal').style.display='flex'"
+              style="background:none;border:1px solid rgba(251,191,36,.4);color:var(--yellow);padding:.35rem .9rem;border-radius:999px;font-size:.74rem;font-weight:700;letter-spacing:.04em;cursor:pointer;text-transform:uppercase;">
+        About &amp; Security
+      </button>
+    </div>
   </div>
 
   {{-- Login Form --}}
@@ -462,6 +468,61 @@
     }
   }
 </script>
+
+{{-- ── About & Security Modal ────────────────────────────────────── --}}
+<div id="aboutModal"
+     style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:1000;align-items:center;justify-content:center;padding:20px;"
+     onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.4);">
+    <div style="padding:24px 28px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;border-radius:16px 16px 0 0;">
+      <h2 style="margin:0;font-size:1.25rem;font-weight:800;color:#0f172a;">About EncryptEd</h2>
+      <button type="button" onclick="document.getElementById('aboutModal').style.display='none'"
+              style="background:none;border:none;font-size:1.6rem;line-height:1;color:#94a3b8;cursor:pointer;">&times;</button>
+    </div>
+
+    <div style="padding:24px 28px;font-size:.9rem;line-height:1.65;color:#334155;">
+      <p style="margin:0 0 16px;">
+        <strong>EncryptEd</strong> is a secure, web-based academic management platform for the
+        Philippine Academy of Sakya. It manages the full student academic lifecycle — admission,
+        enrollment, grading, and reporting — while protecting sensitive data through multiple
+        layers of security.
+      </p>
+
+      <h3 style="font-size:.95rem;font-weight:800;color:#0f172a;margin:20px 0 10px;">Security Features</h3>
+      <ul style="margin:0 0 16px;padding-left:20px;display:flex;flex-direction:column;gap:8px;">
+        <li><strong>Password Protection.</strong> Passwords are hashed with bcrypt (cost 12) and unique salts. Plain-text passwords are never stored.</li>
+        <li><strong>Data Encryption at Rest.</strong> Sensitive personal information (contact details, addresses, and other PII) is encrypted with AES-256 before being saved to the database.</li>
+        <li><strong>Brute-Force Defense.</strong> Accounts lock for 10 minutes after 5 failed login attempts, with additional per-IP rate limiting.</li>
+        <li><strong>Tamper-Evident Audit Logs.</strong> Every sensitive action is recorded in an append-only audit trail chained with SHA-256, so any tampering is detectable.</li>
+        <li><strong>Threat Monitoring.</strong> The system actively detects and logs injection attempts, privilege-escalation attempts, and suspicious login activity.</li>
+        <li><strong>Session Security.</strong> Sessions expire after 30 minutes of inactivity; cookies use HttpOnly and SameSite protections.</li>
+      </ul>
+
+      <h3 style="font-size:.95rem;font-weight:800;color:#0f172a;margin:20px 0 10px;">RA 10173 — Data Privacy Act of 2012</h3>
+      <p style="margin:0 0 12px;">
+        EncryptEd is built on a <strong>Privacy-by-Design</strong> framework in adherence to
+        Republic Act No. 10173, the Data Privacy Act of 2012:
+      </p>
+      <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;">
+        <li><strong>Data Minimization.</strong> Only the data required for academic operations is collected and stored.</li>
+        <li><strong>Consent.</strong> Explicit consent is captured on the admission application before any applicant data is processed.</li>
+        <li><strong>Right of Access.</strong> Users can view the personal data the system holds about them through their profile and security settings.</li>
+        <li><strong>Right to Erasure.</strong> Archived records can be cryptographically shredded once the institutional retention period expires.</li>
+      </ul>
+
+      <p style="margin:20px 0 0;font-size:.8rem;color:#94a3b8;">
+        For data privacy concerns, contact the institution's Data Protection Officer through the school registrar.
+      </p>
+    </div>
+
+    <div style="padding:16px 28px;border-top:1px solid #e2e8f0;text-align:right;position:sticky;bottom:0;background:#fff;border-radius:0 0 16px 16px;">
+      <button type="button" onclick="document.getElementById('aboutModal').style.display='none'"
+              style="background:#1c3a6e;color:#fff;border:none;padding:.55rem 1.4rem;border-radius:8px;font-size:.875rem;font-weight:700;cursor:pointer;">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AcademicYearController;
 use App\Http\Controllers\Admin\GradingQuarterController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\CurriculumMappingController;
+use App\Http\Controllers\Admin\EntranceTestController;
 use App\Http\Controllers\Settings\AdminSettingsController;
 use App\Http\Controllers\Settings\StudentSettingsController;
 use App\Http\Controllers\Settings\FacultySettingsController;
@@ -57,6 +58,8 @@ Route::get('/report-card/{student}/download', [\App\Http\Controllers\ReportCardC
 Route::get('/verify/{token}', [\App\Http\Controllers\ReportCardController::class, 'verify'])
     ->name('report-card.verify');
 
+// ── Public Applicant Onboarding — REMOVED (out of scope: grading management only) ──
+
 // ── Mandatory First-Login Password Reset ──────────────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get( '/password/reset-required', [ForcePasswordResetController::class, 'show'])  ->name('password.force-reset');
@@ -65,6 +68,15 @@ Route::middleware('auth')->group(function () {
 
 // ── Admin Routes ──────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+
+    // ── Payments & Enrollment Fees (pay-first policy) ────────────────────
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/',                      [\App\Http\Controllers\Admin\PaymentController::class, 'index'])   ->name('index');
+        Route::post('/{payment}/confirm',    [\App\Http\Controllers\Admin\PaymentController::class, 'confirm']) ->name('confirm');
+        Route::post('/{payment}/reject',     [\App\Http\Controllers\Admin\PaymentController::class, 'reject'])  ->name('reject');
+        Route::get('/fees',                  [\App\Http\Controllers\Admin\PaymentController::class, 'fees'])    ->name('fees');
+        Route::post('/fees',                 [\App\Http\Controllers\Admin\PaymentController::class, 'storeFee'])->name('fees.store');
+    });
 
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -87,7 +99,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::prefix('students')->name('students.')->group(function () {
         Route::get('/',          [StudentController::class,       'index'])    ->name('index');
         Route::get('/import',    [\App\Http\Controllers\Admin\StudentImportController::class, 'showForm'])->name('import');
-        Route::post('/import',   [\App\Http\Controllers\Admin\StudentImportController::class, 'import'])  ->name('import.submit');
+        Route::post('/import',   [\App\Http\Controllers\Admin\StudentImportController::class, 'import'])  ->name('import');
         Route::get('/import/template', function () {
             $csv = implode("\n", [
                 'first_name,last_name,email,lrn,grade_level,section_name,gender,phone,address',
@@ -114,6 +126,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     // ── Registrar Module — Dashboard ──────────────────────────────────────
     Route::get('/registrar-dashboard', [RegistrarDashboardController::class, 'index'])->name('registrar-dashboard');
 
+    // ── Applicant Management — REMOVED (out of scope: grading management only) ──
+    // ── Entrance Test Results   — REMOVED (out of scope: grading management only) ──
+
     // ── Academic Years Management ─────────────────────────────────────────
     Route::prefix('academic-years')->name('academic-years.')->group(function () {
         Route::get('/',                [AcademicYearController::class, 'index'])   ->name('index');
@@ -121,7 +136,24 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::post('/',               [AcademicYearController::class, 'store'])   ->name('store');
         Route::get('/{academicYear}/edit', [AcademicYearController::class, 'edit']) ->name('edit');
         Route::put('/{academicYear}',  [AcademicYearController::class, 'update'])  ->name('update');
+        Route::patch('/{academicYear}/toggle', [AcademicYearController::class, 'toggle'])->name('toggle');
         Route::delete('/{academicYear}', [AcademicYearController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Classrooms Management (FRS §Classroom Module per adviser) ────────
+    Route::prefix('classrooms')->name('classrooms.')->group(function () {
+        Route::get('/',                        [\App\Http\Controllers\Admin\ClassroomController::class, 'index'])  ->name('index');
+        Route::post('/',                       [\App\Http\Controllers\Admin\ClassroomController::class, 'store'])  ->name('store');
+        Route::put('/{classroom}',             [\App\Http\Controllers\Admin\ClassroomController::class, 'update']) ->name('update');
+        Route::delete('/{classroom}',          [\App\Http\Controllers\Admin\ClassroomController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Sections Management ──────────────────────────────────────────────
+    Route::prefix('sections')->name('sections.')->group(function () {
+        Route::get('/',                  [\App\Http\Controllers\Admin\SectionController::class, 'index'])  ->name('index');
+        Route::post('/',                 [\App\Http\Controllers\Admin\SectionController::class, 'store'])  ->name('store');
+        Route::put('/{section}',         [\App\Http\Controllers\Admin\SectionController::class, 'update']) ->name('update');
+        Route::delete('/{section}',      [\App\Http\Controllers\Admin\SectionController::class, 'destroy'])->name('destroy');
     });
 
     // ── Grading Quarters Management ───────────────────────────────────────
@@ -163,7 +195,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     });
 
     // ── Threat Monitoring & Audit ─────────────────────────────────────────
-    Route::get('/audit',             [AuditLogController::class,  'index']) ->name('audit.index');
+    Route::get('/audit',             [AuditLogController::class,  'index'])    ->name('audit.index');
+    Route::get('/audit/export.pdf',  [AuditLogController::class,  'exportPdf'])->name('audit.export-pdf');
     Route::get('/threats',           [ThreatController::class,    'index']) ->name('threat.index');
     Route::get('/compliance',        [ComplianceController::class, 'index'])->name('compliance.index');
     Route::get('/compliance/export', [ComplianceController::class, 'export'])->name('compliance.export');
@@ -176,12 +209,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::patch('/{announcement}/toggle',    [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggle']) ->name('toggle');
     });
 
-    // ── Faculty Schedules ─────────────────────────────────────────────────
+    // ── Schedule Management (formerly Faculty Schedules; per adviser feedback) ──
+    // Schedules are created first; faculty assignment is the last step and may
+    // be left as "TBA". Uses cascading dropdowns rather than free-text fields.
     Route::prefix('schedules')->name('schedules.')->group(function () {
-        Route::get('/',              [\App\Http\Controllers\Admin\FacultyScheduleController::class, 'index'])  ->name('index');
-        Route::post('/',             [\App\Http\Controllers\Admin\FacultyScheduleController::class, 'store'])  ->name('store');
-        Route::put('/{schedule}',    [\App\Http\Controllers\Admin\FacultyScheduleController::class, 'update']) ->name('update');
-        Route::delete('/{schedule}', [\App\Http\Controllers\Admin\FacultyScheduleController::class, 'destroy'])->name('destroy');
+        Route::get('/',                                  [\App\Http\Controllers\Admin\ScheduleController::class, 'index'])     ->name('index');
+        Route::get('/create',                            [\App\Http\Controllers\Admin\ScheduleController::class, 'create'])    ->name('create');
+        Route::post('/',                                 [\App\Http\Controllers\Admin\ScheduleController::class, 'store'])     ->name('store');
+        Route::get('/{schedule}/edit',                   [\App\Http\Controllers\Admin\ScheduleController::class, 'edit'])      ->name('edit');
+        Route::put('/{schedule}',                        [\App\Http\Controllers\Admin\ScheduleController::class, 'update'])    ->name('update');
+        Route::delete('/{schedule}',                     [\App\Http\Controllers\Admin\ScheduleController::class, 'destroy'])   ->name('destroy');
+        Route::post('/{schedule}/assign-faculty',        [\App\Http\Controllers\Admin\ScheduleController::class, 'assignFaculty'])->name('assign-faculty');
+        // AJAX endpoint for cascading subject dropdown
+        Route::get('/subjects-for-section/{section}',    [\App\Http\Controllers\Admin\ScheduleController::class, 'subjectsForSection'])->name('subjects-for-section');
     });
 
     // ── Admin Settings ────────────────────────────────────────────────────
@@ -238,7 +278,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/faculty/dashboard',      [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'index'])       ->name('faculty.dashboard');
         Route::get('/faculty/my-classes',     [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'myClasses'])   ->name('faculty.classes');
         Route::get('/faculty/gradebook',      [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'gradebook'])   ->name('faculty.gradebook');
-        Route::get('/faculty/attendance',     [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'attendance'])  ->name('faculty.attendance');
+        Route::get('/faculty/attendance',     [App\Http\Controllers\Dashboard\AttendanceController::class,        'index'])  ->name('faculty.attendance');
+        Route::post('/faculty/attendance',    [App\Http\Controllers\Dashboard\AttendanceController::class,        'store'])  ->name('faculty.attendance.store');
         Route::get('/faculty/my-schedule',    [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'mySchedule'])  ->name('faculty.my-schedule');
         Route::get('/faculty/announcements',  [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'announcements'])->name('faculty.announcements');
 
@@ -261,6 +302,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/student/report-card', [App\Http\Controllers\Dashboard\StudentDashboardController::class, 'reportCard'])
         ->middleware('role:student')
         ->name('student.report-card');
+
+    Route::get('/student/grade-archive', [App\Http\Controllers\Dashboard\StudentDashboardController::class, 'gradeArchive'])
+        ->middleware('role:student')
+        ->name('student.grade-archive');
+
+    // ── Student Payments (pay-first enrollment) ──────────────────────────
+    Route::middleware('role:student')->group(function () {
+        Route::get( '/student/payments',        [App\Http\Controllers\Dashboard\PaymentController::class, 'index'])  ->name('student.payments.index');
+        Route::post('/student/payments',        [App\Http\Controllers\Dashboard\PaymentController::class, 'submit']) ->name('student.payments.submit');
+    });
 
     Route::get('/student/academic-holds', [App\Http\Controllers\Dashboard\StudentDashboardController::class, 'academicHolds'])
         ->middleware('role:student')

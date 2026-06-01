@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Announcement;
+use App\Models\Applicant;
 use App\Models\Enrollment;
-use App\Models\Grade;
 use App\Models\GradeComplaint;
 use App\Models\GradeUnlockRequest;
 use App\Models\GradingQuarter;
@@ -56,16 +56,7 @@ class RegistrarUserDashboardController extends Controller
                 ->count()
             : 0;
 
-        // Honor-roll count = locked, non-dropped grades >= 90 in the active quarter
-        $honorStudents = 0;
-        if ($activeQuarter) {
-            $honorStudents = Grade::where('grading_quarter_id', $activeQuarter->id)
-                ->where('status', 'locked')
-                ->whereNull('dropped_at')
-                ->where('final_grade', '>=', 90)
-                ->distinct('student_id')
-                ->count('student_id');
-        }
+        $applicantsInReview = Applicant::whereIn('status', ['under_review', 'for_test', 'tested'])->count();
 
         $stats = [
             'active_academic_year'     => $activeAcademicYear,
@@ -73,7 +64,7 @@ class RegistrarUserDashboardController extends Controller
             'pending_requests'         => $pendingTotal,
             'completed_requests'       => $completedTotal,
             'enrollment_verifications' => $enrollmentCount,
-            'honor_students'           => $honorStudents,
+            'documents_in_review'      => $applicantsInReview,
         ];
 
         // ── Pending Unlock Requests (real data) ────────────────────────────
@@ -163,9 +154,9 @@ class RegistrarUserDashboardController extends Controller
                 'route'       => 'registrar.enrollment',
             ],
             [
-                'title'       => 'Aggregate Reports',
-                'description' => 'Honor roll and academic intervention lists',
-                'route'       => 'registrar.reports.aggregate',
+                'title'       => 'Registrar Reports',
+                'description' => 'View office performance and audit summaries',
+                'route'       => 'admin.audit.index',
             ],
         ];
 
@@ -288,6 +279,21 @@ class RegistrarUserDashboardController extends Controller
 
             return back()->withErrors([
                 'enrollment' => "Enrollment blocked. Unmet prerequisites: {$msgList}",
+            ])->withInput();
+        }
+
+        // ── Payment gate (client policy: pay first, then enlist) ──────────
+        // The student must have at least one 'paid' Payment for this academic
+        // year before the registrar can place them into a section.
+        if (!\App\Models\Payment::studentHasPaid($student->id, (int) $request->academic_year_id)) {
+            AuditLog::record('ENROLLMENT_BLOCKED_UNPAID', [
+                'student_id'       => $student->id,
+                'academic_year_id' => $request->academic_year_id,
+                'grade_level'      => $request->grade_level,
+            ]);
+
+            return back()->withErrors([
+                'enrollment' => "Cannot enlist this student — no confirmed payment found for the selected academic year. Direct them to the Payments page first, or confirm a pending bank transfer.",
             ])->withInput();
         }
 

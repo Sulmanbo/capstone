@@ -47,6 +47,7 @@ class SubjectController extends Controller
         $validated = $request->validate([
             'subject_code'       => ['required', 'string', 'max:50', 'unique:subjects,subject_code'],
             'subject_name'       => ['required', 'string', 'max:200'],
+            'year_level'         => ['nullable', 'string', 'max:20'],
             'description'        => ['nullable', 'string', 'max:1000'],
             'credits'            => ['nullable', 'integer', 'min:1'],
             'status'             => ['required', 'in:active,inactive'],
@@ -89,6 +90,7 @@ class SubjectController extends Controller
         $validated = $request->validate([
             'subject_code'       => ['required', 'string', 'max:50', 'unique:subjects,subject_code,' . $subject->id],
             'subject_name'       => ['required', 'string', 'max:200'],
+            'year_level'         => ['nullable', 'string', 'max:20'],
             'description'        => ['nullable', 'string', 'max:1000'],
             'credits'            => ['nullable', 'integer', 'min:1'],
             'status'             => ['required', 'in:active,inactive'],

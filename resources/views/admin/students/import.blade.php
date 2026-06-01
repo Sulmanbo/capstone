@@ -41,7 +41,7 @@
     <div style="background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px;">
       <div style="font-size:.88rem;font-weight:700;color:#374151;margin-bottom:16px;">Upload CSV</div>
 
-      <form method="POST" action="{{ route('admin.students.import.submit') }}" enctype="multipart/form-data">
+      <form method="POST" action="{{ route('admin.students.import') }}" enctype="multipart/form-data">
         @csrf
 
         <label style="display:block;font-size:.78rem;font-weight:600;color:#374151;margin-bottom:6px;">

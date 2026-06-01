@@ -33,6 +33,7 @@ class Subject extends Model
         'subject_id',
         'subject_code',
         'subject_name',
+        'year_level',
         'description',
         'credits',
         'status',

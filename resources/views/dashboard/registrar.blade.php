@@ -132,8 +132,8 @@
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 11h8m-8 4h6M4 6h16M4 18h16"/></svg>
     </div>
     <div>
-      <div class="sd-stat__val">{{ $stats['honor_students'] }}</div>
-      <div class="sd-stat__label">Honor Students (Current Quarter)</div>
+      <div class="sd-stat__val">{{ $stats['documents_in_review'] }}</div>
+      <div class="sd-stat__label">Documents in Review</div>
     </div>
   </div>
 </div>
