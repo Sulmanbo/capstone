@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Enrollment;
 use App\Models\Message;
+use App\Models\Notification;
 use App\Models\SectionSubject;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -62,12 +63,23 @@ class MessageController extends Controller
             return back()->withErrors(['recipient_id' => 'You can only message your assigned teachers.']);
         }
 
-        Message::create([
+        $message = Message::create([
             'sender_id'    => $user->id,
             'recipient_id' => $data['recipient_id'],
             'subject'      => $data['subject'],
             'body'         => $data['body'],
         ]);
+
+        // Create notification for recipient
+        $recipient = User::find($data['recipient_id']);
+        if ($recipient) {
+            Notification::create([
+                'user_id' => $recipient->id,
+                'type' => 'message',
+                'title' => 'New Message from ' . $user->full_name,
+                'body' => $data['subject'],
+            ]);
+        }
 
         return back()->with('success', 'Message sent successfully.');
     }
@@ -164,13 +176,24 @@ class MessageController extends Controller
             ? $message->recipient_id
             : $message->sender_id;
 
-        Message::create([
+        $reply = Message::create([
             'sender_id'    => $user->id,
             'recipient_id' => $recipientId,
             'parent_id'    => $message->id,
             'subject'      => 'Re: ' . $message->subject,
             'body'         => $data['body'],
         ]);
+
+        // Create notification for recipient
+        $recipient = User::find($recipientId);
+        if ($recipient) {
+            Notification::create([
+                'user_id' => $recipient->id,
+                'type' => 'message',
+                'title' => 'Reply from ' . $user->full_name,
+                'body' => 'Re: ' . $message->subject,
+            ]);
+        }
 
         return back()->with('success', 'Reply sent.');
     }

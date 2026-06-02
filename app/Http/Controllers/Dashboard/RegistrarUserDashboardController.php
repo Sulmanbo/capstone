@@ -12,6 +12,7 @@ use App\Models\GradeComplaint;
 use App\Models\GradeUnlockRequest;
 use App\Models\GradingQuarter;
 use App\Models\AuditLog;
+use App\Models\Notification;
 use App\Models\User;
 use App\Services\PrerequisiteService;
 use Illuminate\Http\Request;
@@ -269,9 +270,38 @@ class RegistrarUserDashboardController extends Controller
         $data['created_by'] = auth()->id();
         $data['is_active']  = true;
 
-        Announcement::create($data);
+        $announcement = Announcement::create($data);
+
+        // Create notifications for target audience
+        $this->notifyAnnouncement($announcement);
 
         return back()->with('success', 'Announcement posted successfully.');
+    }
+
+    private function notifyAnnouncement(Announcement $announcement)
+    {
+        // Determine which users should be notified based on target audience
+        $query = User::query();
+
+        if ($announcement->target_audience === 'all') {
+            // Notify all users
+        } elseif ($announcement->target_audience === 'student') {
+            $query->where('role_id', '01');
+        } elseif ($announcement->target_audience === 'faculty') {
+            $query->where('role_id', '02');
+        } elseif ($announcement->target_audience === 'registrar') {
+            $query->where('role_id', '03');
+        }
+
+        $users = $query->get();
+        foreach ($users as $user) {
+            Notification::create([
+                'user_id' => $user->id,
+                'type' => 'announcement',
+                'title' => $announcement->title,
+                'body' => substr($announcement->message, 0, 150),
+            ]);
+        }
     }
 
     public function enroll(Request $request)

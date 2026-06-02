@@ -7,6 +7,7 @@ use App\Models\AcademicYear;
 use App\Models\AuditLog;
 use App\Models\Grade;
 use App\Models\GradingQuarter;
+use App\Models\Notification;
 use App\Models\SectionSubject;
 use App\Models\User;
 use App\Notifications\GradeVerifiedNotification;
@@ -108,6 +109,17 @@ class GradeVerificationController extends Controller
             'enrollment_id' => $grade->enrollment_id,
         ]);
 
+        // Notify the student about grade verification
+        $student = $grade->enrollment->student;
+        if ($student) {
+            Notification::create([
+                'user_id' => $student->id,
+                'type' => 'grade_submitted',
+                'title' => 'Grade Verified',
+                'body' => "Your {$grade->sectionSubject?->subject?->subject_name ?? 'grade'} has been verified and finalized.",
+            ]);
+        }
+
         // Notify the faculty who submitted
         if ($grade->submittedBy) {
             $grade->submittedBy->notify(new GradeVerifiedNotification(
@@ -183,6 +195,17 @@ class GradeVerificationController extends Controller
             'grade_id' => $grade->id,
             'section_subject_id' => $grade->section_subject_id,
         ]);
+
+        // Notify the student that their grade is now locked
+        $student = $grade->enrollment->student;
+        if ($student) {
+            Notification::create([
+                'user_id' => $student->id,
+                'type' => 'grade_verified',
+                'title' => 'Grade Locked',
+                'body' => "Your {$grade->sectionSubject?->subject?->subject_name ?? 'grade'} is now finalized and locked.",
+            ]);
+        }
 
         return back()->with('success', 'Grade locked successfully.');
     }

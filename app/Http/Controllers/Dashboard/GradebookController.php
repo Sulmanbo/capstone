@@ -9,6 +9,7 @@ use App\Models\Enrollment;
 use App\Models\Grade;
 use App\Models\GradingQuarter;
 use App\Models\GradeUnlockRequest;
+use App\Models\Notification;
 use App\Models\SectionSubject;
 use App\Models\User;
 use App\Notifications\GradeFinalizedNotification;
@@ -159,6 +160,19 @@ class GradebookController extends Controller
             'quarter_id'         => $quarter->id,
             'grades_submitted'   => $draftGrades->count(),
         ]);
+
+        // Notify students about grade submission
+        foreach ($draftGrades as $grade) {
+            $student = $grade->enrollment->student;
+            if ($student) {
+                Notification::create([
+                    'user_id' => $student->id,
+                    'type' => 'grade_submitted',
+                    'title' => 'Grade Submitted for Review',
+                    'body' => "Your {$ss->subject?->subject_name ?? 'grade'} has been submitted for registrar verification.",
+                ]);
+            }
+        }
 
         return redirect()->route('faculty.gradebook.show', $sectionSubject)
             ->with('success', "{$draftGrades->count()} grade(s) submitted for registrar review.");
