@@ -104,7 +104,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::prefix('students')->name('students.')->group(function () {
         Route::get('/',          [StudentController::class,       'index'])    ->name('index');
         Route::get('/import',    [\App\Http\Controllers\Admin\StudentImportController::class, 'showForm'])->name('import');
-        Route::post('/import',   [\App\Http\Controllers\Admin\StudentImportController::class, 'import'])  ->name('import');
+        Route::post('/import',   [\App\Http\Controllers\Admin\StudentImportController::class, 'import'])  ->name('import.submit');
         Route::get('/import/template', function () {
             $csv = implode("\n", [
                 'first_name,last_name,email,lrn,grade_level,section_name,gender,phone,address',
