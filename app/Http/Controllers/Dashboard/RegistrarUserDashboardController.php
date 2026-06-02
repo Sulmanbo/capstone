@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
+use App\Http\Controllers\Dashboard\GradeVerificationController;
 use App\Models\Announcement;
 use App\Models\Applicant;
 use App\Models\Enrollment;
@@ -233,7 +234,8 @@ class RegistrarUserDashboardController extends Controller
 
     public function grades(Request $request)
     {
-        return view('dashboard.registrar-grades');
+        $controller = new GradeVerificationController();
+        return $controller->index($request);
     }
 
     public function calendar(Request $request)

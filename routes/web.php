@@ -270,6 +270,12 @@ Route::middleware(['auth'])->group(function () {
         // Grade finalization
         Route::post('/registrar/gradebook/{sectionSubject}/finalize', [App\Http\Controllers\Dashboard\GradebookController::class, 'finalize'])->name('registrar.gradebook.finalize');
 
+        // Grade verification & finalization
+        Route::post('/registrar/grades/{grade}/finalize', [App\Http\Controllers\Dashboard\GradeVerificationController::class, 'finalize'])->name('registrar.grades.finalize');
+        Route::post('/registrar/grades/{grade}/lock',     [App\Http\Controllers\Dashboard\GradeVerificationController::class, 'lock'])    ->name('registrar.grades.lock');
+        Route::post('/registrar/grades/{grade}/unlock',   [App\Http\Controllers\Dashboard\GradeVerificationController::class, 'unlock'])  ->name('registrar.grades.unlock');
+        Route::post('/registrar/grades/finalize-bulk',    [App\Http\Controllers\Dashboard\GradeVerificationController::class, 'bulkFinalize'])->name('registrar.grades.bulk-finalize');
+
         // Grade lock management
         Route::get( '/registrar/grade-lock',                                       [App\Http\Controllers\Admin\GradeLockController::class, 'index'])         ->name('registrar.grade-lock.index');
         Route::post('/registrar/grade-lock/{sectionSubject}/lock',                 [App\Http\Controllers\Admin\GradeLockController::class, 'lockSection'])   ->name('registrar.grade-lock.lock-section');
