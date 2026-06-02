@@ -1195,6 +1195,36 @@
     setInterval(tick, 1000);
   })();
 
+  // ── Live notification badge ───────────────────────────────────────────
+  (function () {
+    const notifLink = document.querySelector('a[href*="/notifications"]');
+    if (!notifLink) return;
+
+    function updateBadge() {
+      fetch('{{ route("notifications.unread-count") }}')
+        .then(r => r.json())
+        .then(data => {
+          let badge = notifLink.querySelector('span');
+          if (data.count > 0) {
+            if (!badge) {
+              badge = document.createElement('span');
+              badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#e11d48;color:#fff;border-radius:999px;font-size:.6rem;font-weight:800;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;pointer-events:none;';
+              notifLink.appendChild(badge);
+            }
+            badge.textContent = data.count > 99 ? '99+' : data.count;
+          } else if (badge) {
+            badge.remove();
+          }
+        })
+        .catch(() => {});
+    }
+
+    // Update every 15 seconds
+    setInterval(updateBadge, 15000);
+    // Update on focus (user might have read messages in another tab)
+    window.addEventListener('focus', updateBadge);
+  })();
+
   // ── Logout modal ──────────────────────────────────────────────────────
   function openLogoutModal() {
     const modal  = document.getElementById('logout-modal');

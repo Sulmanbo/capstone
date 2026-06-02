@@ -294,4 +294,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(ThreatEvent::class, 'user_id');
     }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id');
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
+    }
 }

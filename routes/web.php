@@ -243,8 +243,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
 // ── Notifications ─────────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
-    Route::get('/notifications',         [\App\Http\Controllers\NotificationController::class, 'index'])   ->name('notifications.index');
-    Route::patch('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::get('/notifications',              [\App\Http\Controllers\NotificationController::class, 'index'])           ->name('notifications.index');
+    Route::get('/notifications/unread-count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])       ->name('notifications.unread-count');
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markRead'])   ->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])     ->name('notifications.mark-all-read');
 });
 
 // ── Role-Specific Dashboard Routes ────────────────────────────────────────
