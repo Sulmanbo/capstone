@@ -355,6 +355,10 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:student')
         ->name('student.schedule');
 
+    Route::get('/student/attendance', [App\Http\Controllers\Dashboard\StudentAttendanceController::class, 'index'])
+        ->middleware('role:student')
+        ->name('student.attendance');
+
     // ── Student Inbox / Messaging ─────────────────────────────────────────
     Route::middleware('role:student')->prefix('student/inbox')->name('student.inbox')->group(function () {
         Route::get('/',            [App\Http\Controllers\Dashboard\MessageController::class, 'studentInbox']) ->name('');
