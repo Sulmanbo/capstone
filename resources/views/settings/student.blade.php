@@ -193,7 +193,7 @@
                 <label class="sw">
                   <input type="checkbox" name="dark_mode" value="1" id="dark_mode_toggle"
                          {{ $user->pref('dark_mode') ? 'checked' : '' }}
-                         onchange="document.body.classList.toggle('dark-mode', this.checked)">
+                         onchange="document.body.classList.toggle('dark-mode', this.checked); localStorage.setItem('dark_mode', this.checked ? '1' : '0');">
                   <span class="sw__track"></span><span class="sw__thumb"></span>
                 </label>
               </div>
