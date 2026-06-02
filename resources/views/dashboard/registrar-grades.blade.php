@@ -10,6 +10,15 @@
 </style>
 @endpush
 
+@push('scripts')
+<script>
+function switchTab(el) {
+  document.querySelectorAll('.gr-tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+}
+</script>
+@endpush
+
 @section('content')
 <div style="max-width:960px;">
 
@@ -21,10 +30,10 @@
   </div>
 
   <div class="gr-tab-bar">
-    <div class="gr-tab active">Grade Verification</div>
-    <div class="gr-tab">Grade Submission</div>
-    <div class="gr-tab">Academic Standing</div>
-    <div class="gr-tab">Transcripts</div>
+    <div class="gr-tab active" onclick="switchTab(this)">Grade Verification</div>
+    <div class="gr-tab" onclick="switchTab(this)">Grade Submission</div>
+    <div class="gr-tab" onclick="switchTab(this)">Academic Standing</div>
+    <div class="gr-tab" onclick="switchTab(this)">Transcripts</div>
   </div>
 
   <div class="sd-card" style="overflow:hidden;">
