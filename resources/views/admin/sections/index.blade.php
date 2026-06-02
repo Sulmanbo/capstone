@@ -117,7 +117,8 @@
               @php $c = $s->status === 'active' ? ['#166534','#86efac','#f0fdf4'] : ['#475569','#cbd5e1','#f8fafc']; @endphp
               <span style="display:inline-block;padding:.2rem .55rem;border-radius:6px;font-size:.7rem;font-weight:700;text-transform:uppercase;color:{{ $c[0] }};background:{{ $c[2] }};border:1px solid {{ $c[1] }};">{{ $s->status }}</span>
             </td>
-            <td style="padding:12px 14px;text-align:right;">
+            <td style="padding:12px 14px;text-align:right;white-space:nowrap;">
+              <a href="{{ route('admin.sections.roster', $s) }}" style="color:#1d4ed8;font-size:.82rem;font-weight:600;text-decoration:none;margin-right:14px;">Manage Students</a>
               <form action="{{ route('admin.sections.destroy', $s) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete section \'{{ $s->grade_level }} — {{ $s->section_name }}\'?');">
                 @csrf @method('DELETE')
                 <button type="submit" style="background:none;border:none;color:#dc2626;font-size:.82rem;font-weight:600;cursor:pointer;">Delete</button>

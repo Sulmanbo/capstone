@@ -154,12 +154,13 @@ function reloadForYear() {
   }
 }
 
-function loadSubjectsForSection(sectionId) {
+function loadSubjectsForSection(sectionId, preselectId) {
   const subjSel = document.getElementById('subject_id');
   if (!sectionId) {
     subjSel.innerHTML = '<option value="">— Select Section first —</option>';
     return;
   }
+  subjSel.innerHTML = '<option value="">Loading subjects…</option>';
   fetch('{{ url("/admin/schedules/subjects-for-section") }}/' + sectionId, {
     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
   })
@@ -170,11 +171,23 @@ function loadSubjectsForSection(sectionId) {
         const opt = document.createElement('option');
         opt.value = s.id;
         opt.textContent = s.subject_code + ' — ' + s.subject_name + (s.year_level ? ' (' + s.year_level + ')' : '');
+        if (preselectId && String(preselectId) === String(s.id)) opt.selected = true;
         subjSel.appendChild(opt);
       });
     })
     .catch(() => { subjSel.innerHTML = '<option value="">— Failed to load subjects —</option>'; });
 }
+
+// On page load (e.g. after a validation error with old input), if a section is
+// already selected, re-fetch its subjects and re-select the previously chosen one
+// so the dropdown is never left empty.
+document.addEventListener('DOMContentLoaded', function () {
+  const sectionSel = document.getElementById('section_id');
+  const presetSubject = @json(old('subject_id', $schedule?->subject_id));
+  if (sectionSel && sectionSel.value) {
+    loadSubjectsForSection(sectionSel.value, presetSubject);
+  }
+});
 
 function updateDayLabel(cb) {
   const pill = document.querySelector('.day-pill[data-val="' + cb.value + '"]');

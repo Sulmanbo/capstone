@@ -159,6 +159,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::post('/',                 [\App\Http\Controllers\Admin\SectionController::class, 'store'])  ->name('store');
         Route::put('/{section}',         [\App\Http\Controllers\Admin\SectionController::class, 'update']) ->name('update');
         Route::delete('/{section}',      [\App\Http\Controllers\Admin\SectionController::class, 'destroy'])->name('destroy');
+        Route::get('/{section}/roster',  [\App\Http\Controllers\Admin\SectionController::class, 'roster']) ->name('roster');
+        Route::post('/{section}/enroll', [\App\Http\Controllers\Admin\SectionController::class, 'enrollStudents'])->name('enroll');
+        Route::delete('/{section}/remove-student', [\App\Http\Controllers\Admin\SectionController::class, 'removeStudent'])->name('remove-student');
     });
 
     // ── Grading Quarters Management ───────────────────────────────────────

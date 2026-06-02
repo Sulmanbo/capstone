@@ -246,7 +246,10 @@ class RegistrarUserDashboardController extends Controller
     public function announcements(Request $request)
     {
         $announcements = Announcement::active()
-            ->forRole('registrar')
+            ->where(function ($q) {
+                $q->forRole('registrar')
+                  ->orWhere('created_by', auth()->id());
+            })
             ->orderByDesc('created_at')
             ->get();
         return view('dashboard.registrar-announcements', compact('announcements'));

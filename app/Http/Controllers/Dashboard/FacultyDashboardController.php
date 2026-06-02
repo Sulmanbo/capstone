@@ -94,7 +94,10 @@ class FacultyDashboardController extends Controller
     {
         $user          = auth()->user();
         $announcements = Announcement::active()
-            ->forRole('faculty')
+            ->where(function ($q) use ($user) {
+                $q->forRole('faculty')
+                  ->orWhere('created_by', $user->id);
+            })
             ->orderByDesc('created_at')
             ->get();
 

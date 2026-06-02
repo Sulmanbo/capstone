@@ -119,4 +119,99 @@ class SectionController extends Controller
 
         return back()->with('success', 'Section removed.');
     }
+
+    /**
+     * Show the section roster: students already enrolled + students available
+     * to add (active students of the same grade level not yet enrolled in any
+     * section for this academic year).
+     */
+    public function roster(Section $section)
+    {
+        $section->load(['academicYear', 'adviser']);
+
+        $enrolled = \App\Models\Enrollment::with('student')
+            ->where('section_id', $section->id)
+            ->where('status', 'enrolled')
+            ->get();
+
+        $enrolledStudentIds = $enrolled->pluck('student_id')->all();
+
+        // Students already enrolled in ANY section for this same academic year
+        // shouldn't appear as "available" (a student belongs to one section/year).
+        $takenStudentIds = \App\Models\Enrollment::where('academic_year_id', $section->academic_year_id)
+            ->where('status', 'enrolled')
+            ->pluck('student_id')
+            ->all();
+
+        $available = User::where('role_id', '01')
+            ->where('status', 'active')
+            ->whereNotIn('id', $takenStudentIds)
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get();
+
+        return view('admin.sections.roster', compact('section', 'enrolled', 'available'));
+    }
+
+    /**
+     * Enroll one or more students into the section.
+     */
+    public function enrollStudents(Request $request, Section $section)
+    {
+        $data = $request->validate([
+            'student_ids'   => ['required', 'array', 'min:1'],
+            'student_ids.*' => ['exists:users,id'],
+        ]);
+
+        $added = 0;
+        foreach ($data['student_ids'] as $studentId) {
+            // Skip if already enrolled somewhere in this academic year
+            $exists = \App\Models\Enrollment::where('academic_year_id', $section->academic_year_id)
+                ->where('student_id', $studentId)
+                ->where('status', 'enrolled')
+                ->exists();
+            if ($exists) {
+                continue;
+            }
+
+            \App\Models\Enrollment::create([
+                'student_id'       => $studentId,
+                'section_id'       => $section->id,
+                'academic_year_id' => $section->academic_year_id,
+                'status'           => 'enrolled',
+                'enrolled_at'      => now(),
+            ]);
+            $added++;
+        }
+
+        AuditLog::record('STUDENTS_ENROLLED', [
+            'section_id' => $section->id,
+            'count'      => $added,
+        ]);
+
+        return back()->with('success', "{$added} student(s) enrolled into {$section->grade_level} — {$section->section_name}.");
+    }
+
+    /**
+     * Remove (un-enroll) a single student from the section.
+     */
+    public function removeStudent(Request $request, Section $section)
+    {
+        $data = $request->validate([
+            'enrollment_id' => ['required', 'exists:enrollments,id'],
+        ]);
+
+        $enrollment = \App\Models\Enrollment::where('id', $data['enrollment_id'])
+            ->where('section_id', $section->id)
+            ->firstOrFail();
+
+        $enrollment->delete();
+
+        AuditLog::record('STUDENT_UNENROLLED', [
+            'section_id'    => $section->id,
+            'enrollment_id' => $data['enrollment_id'],
+        ]);
+
+        return back()->with('success', 'Student removed from section.');
+    }
 }
