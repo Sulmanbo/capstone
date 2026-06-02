@@ -120,6 +120,30 @@ class ScheduleController extends Controller
     }
 
     /**
+     * AJAX: POST /admin/schedules/check-conflict
+     *
+     * Accepts the same fields as the schedule form and returns any conflicts
+     * so the UI can show live availability warnings before submission.
+     */
+    public function checkConflict(Request $request)
+    {
+        $data = $request->validate([
+            'academic_year_id' => ['required'],
+            'faculty_id'       => ['nullable'],
+            'classroom_id'     => ['nullable'],
+            'schedule_days'    => ['required', 'array'],
+            'schedule_days.*'  => ['string'],
+            'start_time'       => ['required'],
+            'end_time'         => ['required'],
+            'ignore_id'        => ['nullable', 'integer'],
+        ]);
+
+        $errors = $this->conflicts->check($data, ignoreId: $data['ignore_id'] ?? null);
+
+        return response()->json(['conflicts' => $errors]);
+    }
+
+    /**
      * POST /admin/schedules
      */
     public function store(Request $request)

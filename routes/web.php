@@ -230,6 +230,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::post('/{schedule}/assign-faculty',        [\App\Http\Controllers\Admin\ScheduleController::class, 'assignFaculty'])->name('assign-faculty');
         // AJAX endpoint for cascading subject dropdown
         Route::get('/subjects-for-section/{section}',    [\App\Http\Controllers\Admin\ScheduleController::class, 'subjectsForSection'])->name('subjects-for-section');
+        Route::post('/check-conflict',                   [\App\Http\Controllers\Admin\ScheduleController::class, 'checkConflict'])->name('check-conflict');
     });
 
     // ── Admin Settings ────────────────────────────────────────────────────

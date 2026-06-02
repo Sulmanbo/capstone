@@ -149,6 +149,9 @@
         </div>
       </div>
 
+      {{-- Live conflict status banner --}}
+      <div id="conflict-banner" style="display:none;border-radius:8px;padding:12px 16px;font-size:.82rem;"></div>
+
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;font-size:.82rem;color:#1e40af;">
         <strong>Duration rule:</strong> minimum {{ config('academic.schedule_min_hours', 2) }} hours per session (no maximum).
         <br><strong>Conflict checks:</strong> the system will reject the form if the chosen faculty or room is already booked for an overlapping time on any selected day. The same subject cannot be scheduled twice in one section per year.
@@ -296,7 +299,96 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+// ── Live conflict checker ─────────────────────────────────────────────────
+const CONFLICT_URL  = '{{ route("admin.schedules.check-conflict") }}';
+const CSRF_TOKEN    = '{{ csrf_token() }}';
+const IGNORE_ID     = @json($schedule?->id);
+
+let conflictTimer = null;
+
+function scheduleConflictCheck() {
+  clearTimeout(conflictTimer);
+  conflictTimer = setTimeout(function () {
+    const ayId     = document.getElementById('academic_year_id')?.value;
+    const startVal = document.getElementById('start_time')?.value;
+    const endVal   = document.getElementById('end_time')?.value;
+    const days     = Array.from(document.querySelectorAll('.day-cb:checked')).map(cb => cb.value);
+    const roomId   = document.getElementById('classroom_id')?.value;
+    const facId    = document.getElementById('faculty_id')?.value;
+
+    // Need at minimum: year, at least one day, both times
+    if (!ayId || !startVal || !endVal || days.length === 0) {
+      setBanner(null);
+      return;
+    }
+
+    setBanner('checking');
+
+    const body = new URLSearchParams();
+    body.append('_token', CSRF_TOKEN);
+    body.append('academic_year_id', ayId);
+    body.append('start_time', startVal);
+    body.append('end_time', endVal);
+    days.forEach(d => body.append('schedule_days[]', d));
+    if (roomId) body.append('classroom_id', roomId);
+    if (facId)  body.append('faculty_id', facId);
+    if (IGNORE_ID) body.append('ignore_id', IGNORE_ID);
+
+    fetch(CONFLICT_URL, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.json())
+      .then(data => setBanner(data.conflicts))
+      .catch(() => setBanner(null));
+  }, 400); // debounce 400ms
+}
+
+function setBanner(state) {
+  const el = document.getElementById('conflict-banner');
+  if (!el) return;
+
+  if (state === null) {
+    el.style.display = 'none';
+    return;
+  }
+  if (state === 'checking') {
+    el.style.display = '';
+    el.style.background = '#f8fafc';
+    el.style.border = '1px solid #e2e8f0';
+    el.style.color = '#64748b';
+    el.innerHTML = '⏳ Checking availability…';
+    return;
+  }
+  if (state.length === 0) {
+    el.style.display = '';
+    el.style.background = '#f0fdf4';
+    el.style.border = '1px solid #86efac';
+    el.style.color = '#166534';
+    el.innerHTML = '✓ No conflicts — this time slot is available.';
+  } else {
+    el.style.display = '';
+    el.style.background = '#fef2f2';
+    el.style.border = '1px solid #fca5a5';
+    el.style.color = '#991b1b';
+    el.innerHTML = '<strong>⚠ Conflict detected:</strong><ul style="margin:6px 0 0;padding-left:18px;">'
+      + state.map(s => '<li>' + s + '</li>').join('')
+      + '</ul>';
+  }
+}
+
+// Attach conflict check to all relevant inputs
+document.addEventListener('DOMContentLoaded', function () {
+  ['start_time', 'end_time', 'classroom_id', 'faculty_id', 'academic_year_id'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', scheduleConflictCheck);
+  });
+  document.querySelectorAll('.day-cb').forEach(function (cb) {
+    cb.addEventListener('change', scheduleConflictCheck);
+  });
+  // Run once on load for edit forms
+  scheduleConflictCheck();
+});
+
 function updateDayLabel(cb) {
+  scheduleConflictCheck();
   const pill = document.querySelector('.day-pill[data-val="' + cb.value + '"]');
   if (!pill) return;
   if (cb.checked) {
