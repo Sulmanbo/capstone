@@ -302,6 +302,11 @@ Route::middleware(['auth'])->group(function () {
         // Dropped student workflow
         Route::post('/faculty/gradebook/{sectionSubject}/drop',      [App\Http\Controllers\Dashboard\GradebookController::class, 'dropStudent'])      ->name('faculty.gradebook.drop');
         Route::post('/faculty/gradebook/{sectionSubject}/reinstate',  [App\Http\Controllers\Dashboard\GradebookController::class, 'reinstateStudent']) ->name('faculty.gradebook.reinstate');
+
+        // Faculty Inbox / Messaging
+        Route::get( '/faculty/inbox',                  [App\Http\Controllers\Dashboard\MessageController::class, 'facultyInbox']) ->name('faculty.inbox');
+        Route::get( '/faculty/inbox/{message}',        [App\Http\Controllers\Dashboard\MessageController::class, 'facultyShow'])  ->name('faculty.inbox.show');
+        Route::post('/faculty/inbox/{message}/reply',  [App\Http\Controllers\Dashboard\MessageController::class, 'facultyReply']) ->name('faculty.inbox.reply');
     });
 
     // Student Dashboard
@@ -346,6 +351,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/student/schedule', [App\Http\Controllers\Dashboard\StudentDashboardController::class, 'schedule'])
         ->middleware('role:student')
         ->name('student.schedule');
+
+    // ── Student Inbox / Messaging ─────────────────────────────────────────
+    Route::middleware('role:student')->prefix('student/inbox')->name('student.inbox')->group(function () {
+        Route::get('/',            [App\Http\Controllers\Dashboard\MessageController::class, 'studentInbox']) ->name('');
+        Route::post('/',           [App\Http\Controllers\Dashboard\MessageController::class, 'studentStore']) ->name('.store');
+        Route::get('/{message}',   [App\Http\Controllers\Dashboard\MessageController::class, 'studentShow'])  ->name('.show');
+    });
 
     // ── Student Settings ──────────────────────────────────────────────────
     Route::middleware('role:student')->prefix('student/settings')->name('student.settings.')->group(function () {

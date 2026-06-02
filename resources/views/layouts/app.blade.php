@@ -526,6 +526,20 @@
         Schedule & Assessment
       </a>
 
+      <a href="{{ route('student.inbox') }}"
+         class="stu-nav-item {{ request()->routeIs('student.inbox*') ? 'active' : '' }}">
+        <span class="stu-icon si-violet">
+          @php $stuUnread = \App\Models\Message::where('recipient_id', auth()->id())->whereNull('read_at')->count(); @endphp
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+          </svg>
+        </span>
+        Inbox
+        @if($stuUnread > 0)
+          <span style="margin-left:auto;background:#ef4444;color:#fff;border-radius:99px;font-size:.65rem;font-weight:700;padding:.1rem .45rem;">{{ $stuUnread }}</span>
+        @endif
+      </a>
+
       {{-- Settings --}}
       <div class="stu-section">
         <span class="stu-section__text">Account</span>
@@ -643,6 +657,18 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
         </svg>
         Announcements
+      </a>
+
+      <a href="{{ route('faculty.inbox') }}"
+         class="enc-nav-item {{ request()->routeIs('faculty.inbox*') ? 'active' : '' }}">
+        @php $facUnread = \App\Models\Message::where('recipient_id', auth()->id())->whereNull('read_at')->count(); @endphp
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+        </svg>
+        Student Inbox
+        @if($facUnread > 0)
+          <span style="margin-left:auto;background:#ef4444;color:#fff;border-radius:99px;font-size:.65rem;font-weight:700;padding:.1rem .45rem;">{{ $facUnread }}</span>
+        @endif
       </a>
 
       <div class="enc-sidebar__section-label" style="margin-top:8px;">Account</div>
