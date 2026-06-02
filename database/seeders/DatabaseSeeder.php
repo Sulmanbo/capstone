@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SubjectSeeder::class,
             SectionSeeder::class,
+            ClassroomSeeder::class,
         ]);
 
         // Skip the test user if it already exists (idempotent for repeated seeds)

@@ -119,13 +119,14 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
         <div>
           <label style="display:block;font-size:.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">7. Start Time *</label>
-          <input type="time" name="start_time" required
+          <input type="time" name="start_time" id="start_time" required
                  value="{{ old('start_time', $schedule ? \Carbon\Carbon::parse($schedule->start_time)->format('H:i') : '') }}"
+                 onchange="autoSetEndTime(this.value)"
                  style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-size:.9rem;">
         </div>
         <div>
           <label style="display:block;font-size:.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">8. End Time *</label>
-          <input type="time" name="end_time" required
+          <input type="time" name="end_time" id="end_time" required
                  value="{{ old('end_time', $schedule ? \Carbon\Carbon::parse($schedule->end_time)->format('H:i') : '') }}"
                  style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-size:.9rem;">
         </div>
@@ -187,6 +188,24 @@ document.addEventListener('DOMContentLoaded', function () {
   if (sectionSel && sectionSel.value) {
     loadSubjectsForSection(sectionSel.value, presetSubject);
   }
+});
+
+const MIN_HOURS = {{ config('academic.schedule_min_hours', 2) }};
+function autoSetEndTime(startVal) {
+  if (!startVal) return;
+  const [h, m] = startVal.split(':').map(Number);
+  const totalMin = h * 60 + m + MIN_HOURS * 60;
+  const endH = String(Math.floor(totalMin / 60) % 24).padStart(2, '0');
+  const endM = String(totalMin % 60).padStart(2, '0');
+  const endEl = document.getElementById('end_time');
+  // Only auto-fill if end time is blank or hasn't been manually changed yet
+  if (!endEl._manuallySet) endEl.value = endH + ':' + endM;
+}
+// Track manual edits to end time so auto-fill doesn't overwrite them
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('end_time').addEventListener('change', function () {
+    this._manuallySet = true;
+  });
 });
 
 function updateDayLabel(cb) {
