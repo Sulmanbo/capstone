@@ -10,6 +10,15 @@
 </style>
 @endpush
 
+@push('scripts')
+<script>
+function switchFilter(el) {
+  document.querySelectorAll('.req-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+}
+</script>
+@endpush
+
 @section('content')
 <div style="max-width:960px;">
 
@@ -21,11 +30,11 @@
   </div>
 
   <div class="req-filter-bar">
-    <button class="req-filter-btn active">All Requests</button>
-    <button class="req-filter-btn">Pending</button>
-    <button class="req-filter-btn">Under Review</button>
-    <button class="req-filter-btn">Ready for Release</button>
-    <button class="req-filter-btn">Completed</button>
+    <button type="button" class="req-filter-btn active" onclick="switchFilter(this)">All Requests</button>
+    <button type="button" class="req-filter-btn" onclick="switchFilter(this)">Pending</button>
+    <button type="button" class="req-filter-btn" onclick="switchFilter(this)">Under Review</button>
+    <button type="button" class="req-filter-btn" onclick="switchFilter(this)">Ready for Release</button>
+    <button type="button" class="req-filter-btn" onclick="switchFilter(this)">Completed</button>
   </div>
 
   <div class="sd-card" style="overflow:hidden;">
