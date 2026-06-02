@@ -15,7 +15,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Skip if a test user already exists (idempotent for repeated seeds)
+        // Idempotent dummy data: subjects (per grade level) and sections
+        // (5 per grade level). Both use firstOrCreate so re-running is safe.
+        $this->call([
+            SubjectSeeder::class,
+            SectionSeeder::class,
+        ]);
+
+        // Skip the test user if it already exists (idempotent for repeated seeds)
         if (User::where('username', 'testuser')->exists()) {
             return;
         }
