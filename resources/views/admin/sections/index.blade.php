@@ -50,14 +50,19 @@
         @csrf
         <input type="hidden" name="academic_year_id" value="{{ $yearId }}">
 
-        <select name="grade_level" required style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:.88rem;">
+        <select name="grade_level" id="grade_level" required onchange="loadSectionNames()" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:.88rem;">
           <option value="">— Grade Level —</option>
-          @foreach(['Grade 7','Grade 8','Grade 9','Grade 10'] as $gl)
-            <option value="{{ $gl }}">{{ $gl }}</option>
+          @foreach(['Grade 7','Grade 8','Grade 9','Grade 10','Grade 11','Grade 12'] as $gl)
+            <option value="{{ $gl }}" {{ old('grade_level') === $gl ? 'selected' : '' }}>{{ $gl }}</option>
           @endforeach
         </select>
 
-        <input type="text" name="section_name" placeholder="Section name (e.g. St. Joseph)" required maxlength="100" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:.88rem;">
+        <div>
+          <select name="section_name" id="section_name_select" required onchange="toggleCustomName()" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:.88rem;">
+            <option value="">— Select grade level first —</option>
+          </select>
+          <input type="text" name="section_name_custom" id="section_name_custom" placeholder="Type section name" maxlength="100" style="display:none;width:100%;margin-top:8px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:.88rem;">
+        </div>
 
         <select name="adviser_id" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:.88rem;">
           <option value="">— Adviser (optional) —</option>
@@ -135,5 +140,64 @@
 </div>
 
 <div style="margin-top:16px;">{{ $sections->links() }}</div>
+
+@push('scripts')
+<script>
+// Suggested section names per grade level (mirrors SectionSeeder).
+const SECTION_NAMES = {
+  'Grade 7':  ['St. Joseph', 'St. Mary', 'St. Michael', 'St. Peter', 'St. Paul'],
+  'Grade 8':  ['Sampaguita', 'Gumamela', 'Rosal', 'Camia', 'Ilang-Ilang'],
+  'Grade 9':  ['Emerald', 'Sapphire', 'Ruby', 'Diamond', 'Topaz'],
+  'Grade 10': ['Newton', 'Einstein', 'Galileo', 'Darwin', 'Tesla'],
+  'Grade 11': ['Mabini', 'Rizal', 'Bonifacio', 'Luna', 'Aguinaldo'],
+  'Grade 12': ['Aristotle', 'Plato', 'Socrates', 'Descartes', 'Kant'],
+};
+
+function loadSectionNames() {
+  const grade = document.getElementById('grade_level').value;
+  const sel   = document.getElementById('section_name_select');
+  const custom = document.getElementById('section_name_custom');
+
+  custom.style.display = 'none';
+  custom.removeAttribute('required');
+  sel.setAttribute('name', 'section_name');
+
+  if (!grade) {
+    sel.innerHTML = '<option value="">— Select grade level first —</option>';
+    return;
+  }
+
+  const names = SECTION_NAMES[grade] || [];
+  let html = '<option value="">— Select Section —</option>';
+  names.forEach(function (n) {
+    html += '<option value="' + n + '">' + n + '</option>';
+  });
+  html += '<option value="__custom__">Other (type a name)…</option>';
+  sel.innerHTML = html;
+}
+
+function toggleCustomName() {
+  const sel    = document.getElementById('section_name_select');
+  const custom = document.getElementById('section_name_custom');
+
+  if (sel.value === '__custom__') {
+    // Hand the field name over to the text input so it gets submitted.
+    sel.removeAttribute('name');
+    custom.setAttribute('name', 'section_name');
+    custom.setAttribute('required', 'required');
+    custom.style.display = 'block';
+    custom.focus();
+  } else {
+    sel.setAttribute('name', 'section_name');
+    custom.removeAttribute('name');
+    custom.removeAttribute('required');
+    custom.style.display = 'none';
+  }
+}
+
+// Populate on load if a grade level is already chosen (e.g. after a validation error).
+document.addEventListener('DOMContentLoaded', loadSectionNames);
+</script>
+@endpush
 
 @endsection
