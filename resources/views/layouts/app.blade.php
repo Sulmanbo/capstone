@@ -241,6 +241,36 @@
     --sd-shadow:  0 4px 24px rgba(15,23,42,.07);
   }
 
+  /* ── Dark Mode ────────────────────────────────────────── */
+  body.dark-mode {
+    --sd-bg:      #0f172a;
+    --sd-card:    #1e293b;
+    --sd-border:  rgba(255,255,255,.08);
+    --sd-navy:    #e2e8f0;
+    --sd-muted:   #94a3b8;
+    --sd-shadow:  0 4px 24px rgba(0,0,0,.4);
+  }
+  body.dark-mode .enc-main            { background: #0f172a; }
+  body.dark-mode .enc-header          { background: #1e293b; border-bottom-color: rgba(255,255,255,.07); }
+  body.dark-mode .enc-header__breadcrumb,
+  body.dark-mode .enc-page__title,
+  body.dark-mode .enc-page__subtitle  { color: #e2e8f0; }
+  body.dark-mode .enc-card,
+  body.dark-mode .sd-card,
+  body.dark-mode .enc-card__header    { background: #1e293b; border-color: rgba(255,255,255,.08); color: #e2e8f0; }
+  body.dark-mode .enc-card__title,
+  body.dark-mode .enc-card__meta      { color: #e2e8f0; }
+  body.dark-mode .enc-card__body      { color: #cbd5e1; }
+  body.dark-mode table thead tr       { background: #0f172a; }
+  body.dark-mode table tbody tr       { border-color: rgba(255,255,255,.06); }
+  body.dark-mode table td,
+  body.dark-mode table th             { color: #cbd5e1; }
+  body.dark-mode input,
+  body.dark-mode select,
+  body.dark-mode textarea             { background: #0f172a; border-color: rgba(255,255,255,.12); color: #e2e8f0; }
+  body.dark-mode input::placeholder,
+  body.dark-mode textarea::placeholder { color: #475569; }
+
   /* ── Global academic-year picker (header) ─────────────── */
   .enc-year-picker {
     display: inline-flex;
@@ -392,7 +422,7 @@
 
   @stack('head')
 </head>
-<body>
+<body class="{{ auth()->check() && auth()->user()->pref('dark_mode') ? 'dark-mode' : '' }}">
 
 <div class="enc-shell">
 

@@ -186,11 +186,13 @@
             <div class="st-card__body">
               <div class="st-toggle-row">
                 <div class="st-toggle-info">
-                  <div class="st-toggle-label">Dark Mode <span class="st-badge">Coming Soon</span></div>
+                  <div class="st-toggle-label">Dark Mode</div>
                   <div class="st-toggle-desc">Switch the portal to a darker color scheme.</div>
                 </div>
                 <label class="sw">
-                  <input type="checkbox" name="dark_mode" value="1" {{ $user->pref('dark_mode') ? 'checked' : '' }} disabled>
+                  <input type="checkbox" name="dark_mode" value="1" id="dark_mode_toggle"
+                         {{ $user->pref('dark_mode') ? 'checked' : '' }}
+                         onchange="document.body.classList.toggle('dark-mode', this.checked)">
                   <span class="sw__track"></span><span class="sw__thumb"></span>
                 </label>
               </div>
