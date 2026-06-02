@@ -78,11 +78,28 @@
                   style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font-size:.9rem;">
             <option value="">— No Room —</option>
             @foreach($classrooms as $cr)
-              <option value="{{ $cr->id }}" {{ old('classroom_id', $schedule?->classroom_id) == $cr->id ? 'selected' : '' }}>
+              @php
+                $rn = strtolower($cr->room_name);
+                $roomType = match(true) {
+                    str_contains($rn, 'science lab')                     => 'science',
+                    str_contains($rn, 'computer lab')                    => 'computer',
+                    str_contains($rn, 'home ec') || $rn === 'workshop'   => 'tle',
+                    $rn === 'gymnasium'                                   => 'pe',
+                    $rn === 'avr' || $rn === 'library'                   => 'special',
+                    default                                               => 'regular',
+                };
+              @endphp
+              <option value="{{ $cr->id }}"
+                      data-type="{{ $roomType }}"
+                      {{ old('classroom_id', $schedule?->classroom_id) == $cr->id ? 'selected' : '' }}>
                 {{ $cr->room_name }}@if($cr->building) — {{ $cr->building }}@endif (cap. {{ $cr->capacity }})
               </option>
             @endforeach
           </select>
+          <p id="room-filter-hint" style="font-size:.72rem;color:#94a3b8;margin:5px 0 0;display:none;">
+            Showing rooms suitable for the selected subject.
+            <a href="#" onclick="clearRoomFilter(event)" style="color:#1d4ed8;">Show all</a>
+          </p>
         </div>
 
         {{-- Step 5: Faculty (OPTIONAL — TBA allowed per adviser) --}}
@@ -171,10 +188,14 @@ function loadSubjectsForSection(sectionId, preselectId) {
       rows.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
+        opt.dataset.code = s.subject_code;
         opt.textContent = s.subject_code + ' — ' + s.subject_name + (s.year_level ? ' (' + s.year_level + ')' : '');
         if (preselectId && String(preselectId) === String(s.id)) opt.selected = true;
         subjSel.appendChild(opt);
       });
+      // Re-apply room filter if a subject is already selected after AJAX reload
+      const selected = subjSel.options[subjSel.selectedIndex];
+      if (selected && selected.dataset.code) filterRoomsBySubject(selected.dataset.code);
     })
     .catch(() => { subjSel.innerHTML = '<option value="">— Failed to load subjects —</option>'; });
 }
@@ -187,6 +208,73 @@ document.addEventListener('DOMContentLoaded', function () {
   const presetSubject = @json(old('subject_id', $schedule?->subject_id));
   if (sectionSel && sectionSel.value) {
     loadSubjectsForSection(sectionSel.value, presetSubject);
+  }
+});
+
+// ── Room filter by subject ────────────────────────────────────────────────
+// Maps subject code prefixes → allowed room data-type values.
+const SUBJECT_ROOM_MAP = {
+  SCI:      ['science', 'regular'],
+  EARTH:    ['science', 'regular'],
+  PE:       ['pe'],
+  MAPEH:    ['pe', 'regular'],
+  TLE:      ['tle', 'regular'],
+  ORALCOM:  ['special', 'regular'],
+  CONTEMP:  ['special', 'regular'],
+  AVR:      ['special', 'regular'],
+  PRACRES:  ['special', 'regular'],
+  COMPUTER: ['computer', 'regular'],
+};
+
+function getRoomTypesForCode(code) {
+  code = (code || '').toUpperCase();
+  for (const prefix in SUBJECT_ROOM_MAP) {
+    if (code.startsWith(prefix)) return SUBJECT_ROOM_MAP[prefix];
+  }
+  return ['regular', 'special']; // default: academic subjects get regular + special rooms
+}
+
+function filterRoomsBySubject(code) {
+  const allowed = getRoomTypesForCode(code);
+  const sel = document.getElementById('classroom_id');
+  const hint = document.getElementById('room-filter-hint');
+  if (!sel) return;
+
+  let hiddenAny = false;
+  Array.from(sel.options).forEach(function(opt) {
+    if (!opt.value) return; // always keep "— No Room —"
+    const type = opt.dataset.type || 'regular';
+    const show = allowed.includes(type);
+    opt.hidden = !show;
+    opt.disabled = !show;
+    if (!show) {
+      hiddenAny = true;
+      if (opt.selected) { sel.value = ''; } // reset if currently selected room is incompatible
+    }
+  });
+
+  if (hint) hint.style.display = hiddenAny ? '' : 'none';
+}
+
+function clearRoomFilter(e) {
+  e.preventDefault();
+  const sel = document.getElementById('classroom_id');
+  const hint = document.getElementById('room-filter-hint');
+  Array.from(sel.options).forEach(function(opt) { opt.hidden = false; opt.disabled = false; });
+  if (hint) hint.style.display = 'none';
+}
+
+// Wire subject dropdown change → room filter
+document.addEventListener('DOMContentLoaded', function() {
+  const subjSel = document.getElementById('subject_id');
+  if (subjSel) {
+    subjSel.addEventListener('change', function() {
+      const opt = this.options[this.selectedIndex];
+      filterRoomsBySubject(opt ? opt.dataset.code || '' : '');
+    });
+    // Apply on load for edit forms
+    const preOpt = subjSel.options[subjSel.selectedIndex];
+    if (preOpt && preOpt.dataset.code) filterRoomsBySubject(preOpt.dataset.code);
   }
 });
 
