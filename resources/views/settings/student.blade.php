@@ -171,8 +171,8 @@
 
       {{-- Display Options --}}
       <div id="tab-display" class="st-tab" style="display:none;">
-        @if(session('success_prefs'))
-          <div class="st-alert st-alert--success">{{ session('success_prefs') }}</div>
+        @if(session('success_display'))
+          <div class="st-alert st-alert--success">{{ session('success_display') }}</div>
         @endif
         <div class="st-card">
           <div class="st-card__head">
@@ -181,6 +181,7 @@
           </div>
           <form method="POST" action="{{ route('student.settings.preferences') }}">
             @csrf
+            <input type="hidden" name="_source" value="display">
             <input type="hidden" name="email_notifications" value="{{ $user->pref('email_notifications', true) ? '1' : '0' }}">
             <input type="hidden" name="sms_notifications"   value="{{ $user->pref('sms_notifications') ? '1' : '0' }}">
             <div class="st-card__body">
@@ -259,6 +260,7 @@ stSwitch(initTab, document.querySelector('[onclick*="' + initTab + '"]'));
 @if($errors->any()) stSwitch('password', document.querySelector('[onclick*="password"]')); @endif
 @if(session('success_password')) stSwitch('password', document.querySelector('[onclick*="password"]')); @endif
 @if(session('success_emergency')) stSwitch('emergency', document.querySelector('[onclick*="emergency"]')); @endif
-@if(session('success_prefs')) stSwitch('notifications', document.querySelector('[onclick*="notifications"]')); @endif
+@if(session('success_prefs'))    stSwitch('notifications', document.querySelector('[onclick*="notifications"]')); @endif
+@if(session('success_display'))  stSwitch('display',        document.querySelector('[onclick*="display"]'));       @endif
 </script>
 @endpush
