@@ -38,26 +38,42 @@
 .enr-btn:hover { background: #4338ca; }
 .enr-btn:disabled { background: #94a3b8; cursor: not-allowed; }
 
-/* ── Student searchable dropdown ─────────── */
+/* ── Student dropdown ────────────────────── */
 .enr-search-wrap { position: relative; }
+.enr-dropdown-trigger {
+  width: 100%; padding: .55rem .85rem;
+  border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: .87rem; background: #fff; color: #0f172a;
+  box-sizing: border-box; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  user-select: none; transition: border-color .15s;
+}
+.enr-dropdown-trigger:hover { border-color: #6366f1; }
+.enr-dropdown-trigger.open { border-color: #6366f1; border-radius: 8px 8px 0 0; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+.enr-dropdown-trigger__text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.enr-dropdown-trigger__arrow { flex-shrink: 0; margin-left: 8px; transition: transform .2s; color: #94a3b8; }
+.enr-dropdown-trigger.open .enr-dropdown-trigger__arrow { transform: rotate(180deg); }
+.enr-dropdown-panel {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 200;
+  border: 1px solid #6366f1; border-top: none; border-radius: 0 0 8px 8px;
+  background: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  display: none;
+}
+.enr-dropdown-panel.open { display: block; }
 .enr-student-filter {
-  width: 100%; padding: .45rem .85rem;
-  border: 1px solid #e2e8f0; border-radius: 8px 8px 0 0;
-  font-size: .85rem; box-sizing: border-box;
-  border-bottom: none; background: #f8fafc;
+  width: 100%; padding: .5rem .85rem;
+  border: none; border-bottom: 1px solid #e2e8f0;
+  font-size: .85rem; box-sizing: border-box; background: #f8fafc;
 }
-.enr-student-filter:focus { outline: none; border-color: #6366f1; }
-.enr-student-list {
-  border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px;
-  max-height: 220px; overflow-y: auto; background: #fff;
-}
+.enr-student-filter:focus { outline: none; background: #eff6ff; }
+.enr-student-list { max-height: 220px; overflow-y: auto; }
 .enr-student-opt {
   padding: 9px 12px; cursor: pointer;
   border-bottom: 1px solid #f1f5f9;
   transition: background .1s; display: flex; align-items: center; justify-content: space-between;
 }
 .enr-student-opt:last-child { border-bottom: none; }
-.enr-student-opt:hover, .enr-student-opt.selected { background: #eff6ff; }
+.enr-student-opt:hover { background: #f1f5f9; }
 .enr-student-opt__name { font-weight: 700; font-size: .85rem; color: #0f172a; }
 .enr-student-opt__lrn  { font-size: .75rem; color: #64748b; }
 .enr-student-opt__tag  { font-size: .68rem; font-weight: 700; border-radius: 4px; padding: 1px 6px; background: #fef3c7; color: #92400e; white-space: nowrap; margin-left: 8px; }
@@ -140,32 +156,46 @@
           <div class="enr-field">
             <label class="enr-label">Select Student</label>
             <div class="enr-search-wrap">
-              <input type="text" id="studentFilter" class="enr-student-filter" placeholder="🔍  Filter by name or LRN…" oninput="filterStudents(this.value)" autocomplete="off">
-              <div class="enr-student-list" id="studentList">
-                @foreach($allStudents as $s)
-                @php
-                  $currentSection = $s->enrollments->first()?->section?->section_name;
-                @endphp
-                <div class="enr-student-opt"
-                     data-id="{{ $s->id }}"
-                     data-name="{{ $s->full_name }}"
-                     data-lrn="{{ $s->lrn ?? '' }}"
-                     data-section="{{ $currentSection ?? '' }}"
-                     data-search="{{ strtolower($s->full_name . ' ' . ($s->lrn ?? '')) }}"
-                     onclick="selectStudent(this)">
-                  <div>
-                    <div class="enr-student-opt__name">{{ $s->full_name }}</div>
-                    <div class="enr-student-opt__lrn">LRN: {{ $s->lrn ?? 'No LRN' }}</div>
+
+              {{-- Trigger button --}}
+              <div class="enr-dropdown-trigger" id="studentTrigger" onclick="toggleStudentDropdown()">
+                <span class="enr-dropdown-trigger__text" id="triggerText" style="color:#94a3b8;">— Choose a student —</span>
+                <svg class="enr-dropdown-trigger__arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+                </svg>
+              </div>
+
+              {{-- Dropdown panel --}}
+              <div class="enr-dropdown-panel" id="studentDropdownPanel">
+                <input type="text" id="studentFilter" class="enr-student-filter"
+                       placeholder="🔍  Filter by name or LRN…"
+                       oninput="filterStudents(this.value)"
+                       autocomplete="off">
+                <div class="enr-student-list" id="studentList">
+                  @foreach($allStudents as $s)
+                  @php $currentSection = $s->enrollments->first()?->section?->section_name; @endphp
+                  <div class="enr-student-opt"
+                       data-id="{{ $s->id }}"
+                       data-name="{{ $s->full_name }}"
+                       data-lrn="{{ $s->lrn ?? '' }}"
+                       data-section="{{ $currentSection ?? '' }}"
+                       data-search="{{ strtolower($s->full_name . ' ' . ($s->lrn ?? '')) }}"
+                       onclick="selectStudent(this)">
+                    <div>
+                      <div class="enr-student-opt__name">{{ $s->full_name }}</div>
+                      <div class="enr-student-opt__lrn">LRN: {{ $s->lrn ?? 'No LRN' }}</div>
+                    </div>
+                    @if($currentSection)
+                    <span class="enr-student-opt__tag">{{ $currentSection }}</span>
+                    @endif
                   </div>
-                  @if($currentSection)
-                  <span class="enr-student-opt__tag">{{ $currentSection }}</span>
+                  @endforeach
+                  @if($allStudents->isEmpty())
+                  <div style="padding:20px;text-align:center;color:#94a3b8;font-size:.82rem;">No students found in the system.</div>
                   @endif
                 </div>
-                @endforeach
-                @if($allStudents->isEmpty())
-                <div style="padding:20px;text-align:center;color:#94a3b8;font-size:.82rem;">No students found in the system.</div>
-                @endif
               </div>
+
             </div>
             <input type="hidden" name="student_id" id="selectedStudentId">
             <div id="selectedStudentInfo" style="margin-top:8px;font-size:.8rem;color:#475569;display:none;align-items:center;gap:6px;">
@@ -355,7 +385,30 @@
 const AJAX_SECTIONS_URL = '{{ route('registrar.ajax.sections') }}';
 const AJAX_SECTION_URL  = '{{ route('registrar.ajax.section-info') }}';
 
-// ── Student List Filter ───────────────────────────────────────────────────
+// ── Student Dropdown ──────────────────────────────────────────────────────
+function toggleStudentDropdown() {
+  const trigger = document.getElementById('studentTrigger');
+  const panel   = document.getElementById('studentDropdownPanel');
+  const isOpen  = panel.classList.contains('open');
+  if (isOpen) {
+    closeStudentDropdown();
+  } else {
+    trigger.classList.add('open');
+    panel.classList.add('open');
+    document.getElementById('studentFilter').focus();
+  }
+}
+
+function closeStudentDropdown() {
+  document.getElementById('studentTrigger').classList.remove('open');
+  document.getElementById('studentDropdownPanel').classList.remove('open');
+}
+
+// Close on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.enr-search-wrap')) closeStudentDropdown();
+});
+
 function filterStudents(q) {
   const term = q.toLowerCase().trim();
   document.querySelectorAll('#studentList .enr-student-opt').forEach(el => {
@@ -364,28 +417,22 @@ function filterStudents(q) {
 }
 
 function selectStudent(el) {
-  // Clear previous selection
-  document.querySelectorAll('#studentList .enr-student-opt').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-
-  const id      = el.dataset.id;
   const name    = el.dataset.name;
   const lrn     = el.dataset.lrn;
   const section = el.dataset.section;
 
-  document.getElementById('selectedStudentId').value = id;
+  document.getElementById('selectedStudentId').value = el.dataset.id;
+  document.getElementById('triggerText').textContent  = name + (lrn ? '  (' + lrn + ')' : '');
+  document.getElementById('triggerText').style.color  = '#0f172a';
   document.getElementById('selectedStudentName').textContent = name;
   document.getElementById('selectedStudentLrn').textContent  = lrn ? '(' + lrn + ')' : '';
 
   const warn = document.getElementById('alreadyEnrolledWarning');
-  if (section) {
-    warn.textContent     = 'Already in ' + section;
-    warn.style.display   = 'inline';
-  } else {
-    warn.style.display   = 'none';
-  }
+  warn.textContent   = section ? 'Already in ' + section : '';
+  warn.style.display = section ? 'inline' : 'none';
 
   document.getElementById('selectedStudentInfo').style.display = 'flex';
+  closeStudentDropdown();
   checkEnrollBtn();
 }
 
