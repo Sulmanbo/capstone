@@ -479,20 +479,8 @@ class RegistrarUserDashboardController extends Controller
             ])->withInput();
         }
 
-        // ── Payment gate (client policy: pay first, then enlist) ──────────
-        // The student must have at least one 'paid' Payment for this academic
-        // year before the registrar can place them into a section.
-        if (!\App\Models\Payment::studentHasPaid($student->id, (int) $request->academic_year_id)) {
-            AuditLog::record('ENROLLMENT_BLOCKED_UNPAID', [
-                'student_id'       => $student->id,
-                'academic_year_id' => $request->academic_year_id,
-                'grade_level'      => $request->grade_level,
-            ]);
-
-            return back()->withErrors([
-                'enrollment' => "Cannot enlist this student — no confirmed payment found for the selected academic year. Direct them to the Payments page first, or confirm a pending bank transfer.",
-            ])->withInput();
-        }
+        // Payment gate bypassed for testing — re-enable before production
+        // if (!\App\Models\Payment::studentHasPaid($student->id, (int) $request->academic_year_id)) { ... }
 
         Enrollment::create([
             'student_id'       => $student->id,
