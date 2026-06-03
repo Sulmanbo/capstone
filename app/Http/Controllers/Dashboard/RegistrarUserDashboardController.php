@@ -210,17 +210,150 @@ class RegistrarUserDashboardController extends Controller
         }
 
         $standardGradeLevels = [
-            'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
             'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12',
         ];
+
+        // Recent enrollments for the active academic year
+        $search = $request->input('search', '');
+        $recentEnrollments = collect();
+        if ($activeAcademicYear) {
+            $recentEnrollments = Enrollment::with(['student', 'section.adviser', 'section.sectionSubjects.faculty', 'section.sectionSubjects.subject'])
+                ->where('academic_year_id', $activeAcademicYear->id)
+                ->where('status', 'enrolled')
+                ->when($search, function ($q) use ($search) {
+                    $q->whereHas('student', fn($q2) =>
+                        $q2->where('first_name', 'like', "%{$search}%")
+                           ->orWhere('last_name', 'like', "%{$search}%")
+                           ->orWhere('lrn', 'like', "%{$search}%")
+                    )->orWhereHas('section', fn($q2) =>
+                        $q2->where('section_name', 'like', "%{$search}%")
+                    );
+                })
+                ->orderByDesc('enrolled_at')
+                ->paginate(20)
+                ->withQueryString();
+        }
 
         return view('dashboard.registrar-enrollment', compact(
             'activeAcademicYear',
             'checkStudent',
             'checkGrade',
             'unmetPrereqs',
-            'standardGradeLevels'
+            'standardGradeLevels',
+            'recentEnrollments'
         ));
+    }
+
+    /** AJAX: return sections for a grade level */
+    public function ajaxSections(Request $request)
+    {
+        $gradeLevel = $request->input('grade_level');
+        $activeYear = AcademicYear::where('status', 'active')->first();
+
+        if (!$activeYear || !$gradeLevel) {
+            return response()->json([]);
+        }
+
+        $sections = \App\Models\Section::where('academic_year_id', $activeYear->id)
+            ->where('grade_level', $gradeLevel)
+            ->where('status', 'active')
+            ->with(['adviser', 'sectionSubjects.faculty', 'sectionSubjects.subject'])
+            ->get()
+            ->map(fn($s) => [
+                'id'           => $s->id,
+                'section_name' => $s->section_name,
+                'grade_level'  => $s->grade_level,
+                'capacity'     => $s->capacity,
+                'enrolled'     => $s->enrollments()->where('status', 'enrolled')->count(),
+                'adviser'      => $s->adviser?->full_name ?? 'No adviser',
+                'subjects'     => $s->sectionSubjects->map(fn($ss) => [
+                    'subject' => $ss->subject?->subject_name,
+                    'faculty' => $ss->faculty?->full_name ?? 'Unassigned',
+                ]),
+            ]);
+
+        return response()->json($sections);
+    }
+
+    /** AJAX: search students by name or LRN */
+    public function ajaxStudents(Request $request)
+    {
+        $q = $request->input('q', '');
+        if (strlen($q) < 2) return response()->json([]);
+
+        $activeYear = AcademicYear::where('status', 'active')->first();
+
+        $students = User::where('role_id', '01')
+            ->where(function ($query) use ($q) {
+                $query->where('first_name', 'like', "%{$q}%")
+                      ->orWhere('last_name',  'like', "%{$q}%")
+                      ->orWhere('lrn',        'like', "%{$q}%");
+            })
+            ->with(['enrollments' => fn($q2) => $q2
+                ->where('academic_year_id', optional($activeYear)->id)
+                ->where('status', 'enrolled')
+                ->with('section')])
+            ->limit(15)
+            ->get()
+            ->map(fn($u) => [
+                'id'           => $u->id,
+                'full_name'    => $u->full_name,
+                'lrn'          => $u->lrn ?? 'No LRN',
+                'grade_level'  => $u->grade_level,
+                'enrolled_in'  => $u->enrollments->first()?->section?->section_name,
+            ]);
+
+        return response()->json($students);
+    }
+
+    /** AJAX: get section details (subjects + faculty) */
+    public function ajaxSectionInfo(Request $request)
+    {
+        $sectionId = $request->input('section_id');
+        $section = \App\Models\Section::with(['adviser', 'sectionSubjects.faculty', 'sectionSubjects.subject'])
+            ->find($sectionId);
+
+        if (!$section) return response()->json(null, 404);
+
+        return response()->json([
+            'id'           => $section->id,
+            'section_name' => $section->section_name,
+            'grade_level'  => $section->grade_level,
+            'capacity'     => $section->capacity,
+            'enrolled'     => $section->enrollments()->where('status', 'enrolled')->count(),
+            'adviser'      => $section->adviser?->full_name ?? 'No adviser assigned',
+            'subjects'     => $section->sectionSubjects->map(fn($ss) => [
+                'subject' => $ss->subject?->subject_name ?? 'Unknown',
+                'faculty' => $ss->faculty?->full_name ?? 'Unassigned',
+                'days'    => is_array($ss->schedule_days) ? implode(', ', $ss->schedule_days) : ($ss->schedule_days ?? ''),
+                'time'    => $ss->start_time ? (substr($ss->start_time, 0, 5) . ' – ' . substr($ss->end_time, 0, 5)) : '',
+            ]),
+        ]);
+    }
+
+    /** Drop a student from their current enrollment */
+    public function dropEnrollment(Request $request)
+    {
+        $request->validate([
+            'enrollment_id' => ['required', 'exists:enrollments,id'],
+            'reason'        => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $enrollment = Enrollment::findOrFail($request->enrollment_id);
+
+        $enrollment->update([
+            'status'     => 'dropped',
+            'dropped_at' => now(),
+        ]);
+
+        AuditLog::record(AuditLog::ENROLLMENT_DROPPED, [
+            'enrollment_id' => $enrollment->id,
+            'student_id'    => $enrollment->student_id,
+            'section_id'    => $enrollment->section_id,
+            'reason'        => $request->input('reason'),
+        ]);
+
+        return back()->with('success', 'Student removed from section.');
     }
 
     public function requests(Request $request)

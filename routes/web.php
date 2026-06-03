@@ -265,7 +265,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/registrar/announcements', [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'postAnnouncement'])->name('registrar.announcements.store');
 
         // Enrollment (with prerequisite enforcement)
-        Route::post('/registrar/enroll', [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'enroll'])->name('registrar.enroll');
+        Route::post('/registrar/enroll',          [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'enroll'])->name('registrar.enroll');
+        Route::post('/registrar/drop-enrollment', [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'dropEnrollment'])->name('registrar.drop-enrollment');
+        // AJAX helpers for cascading dropdowns
+        Route::get('/registrar/ajax/sections',    [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'ajaxSections'])->name('registrar.ajax.sections');
+        Route::get('/registrar/ajax/students',    [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'ajaxStudents'])->name('registrar.ajax.students');
+        Route::get('/registrar/ajax/section-info',[App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'ajaxSectionInfo'])->name('registrar.ajax.section-info');
 
         // Grade finalization
         Route::post('/registrar/gradebook/{sectionSubject}/finalize', [App\Http\Controllers\Dashboard\GradebookController::class, 'finalize'])->name('registrar.gradebook.finalize');
