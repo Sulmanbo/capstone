@@ -213,6 +213,17 @@ class RegistrarUserDashboardController extends Controller
             'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12',
         ];
 
+        // All students for the dropdown (with current enrollment info)
+        $allStudents = User::where('role_id', '01')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->with(['enrollments' => fn($q) => $q
+                ->where('academic_year_id', optional($activeAcademicYear)->id)
+                ->where('status', 'enrolled')
+                ->with('section')
+            ])
+            ->get();
+
         // Recent enrollments for the active academic year
         $search = $request->input('search', '');
         $recentEnrollments = collect();
@@ -240,7 +251,8 @@ class RegistrarUserDashboardController extends Controller
             'checkGrade',
             'unmetPrereqs',
             'standardGradeLevels',
-            'recentEnrollments'
+            'recentEnrollments',
+            'allStudents'
         ));
     }
 

@@ -38,25 +38,29 @@
 .enr-btn:hover { background: #4338ca; }
 .enr-btn:disabled { background: #94a3b8; cursor: not-allowed; }
 
-/* ── Student search autocomplete ────────── */
+/* ── Student searchable dropdown ─────────── */
 .enr-search-wrap { position: relative; }
-.enr-suggestions {
-  position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.12);
-  max-height: 240px; overflow-y: auto; display: none;
+.enr-student-filter {
+  width: 100%; padding: .45rem .85rem;
+  border: 1px solid #e2e8f0; border-radius: 8px 8px 0 0;
+  font-size: .85rem; box-sizing: border-box;
+  border-bottom: none; background: #f8fafc;
 }
-.enr-suggestion {
-  padding: 10px 14px; cursor: pointer;
+.enr-student-filter:focus { outline: none; border-color: #6366f1; }
+.enr-student-list {
+  border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px;
+  max-height: 220px; overflow-y: auto; background: #fff;
+}
+.enr-student-opt {
+  padding: 9px 12px; cursor: pointer;
   border-bottom: 1px solid #f1f5f9;
-  transition: background .1s;
+  transition: background .1s; display: flex; align-items: center; justify-content: space-between;
 }
-.enr-suggestion:last-child { border-bottom: none; }
-.enr-suggestion:hover { background: #f1f5f9; }
-.enr-suggestion__name { font-weight: 700; font-size: .87rem; color: #0f172a; }
-.enr-suggestion__meta { font-size: .75rem; color: #64748b; margin-top: 1px; }
-.enr-suggestion__tag  { display: inline-block; background: #dcfce7; color: #166534; font-size: .68rem; font-weight: 700; border-radius: 4px; padding: 1px 5px; margin-top: 2px; }
-.enr-suggestion__tag.enrolled { background: #fef9c3; color: #713f12; }
+.enr-student-opt:last-child { border-bottom: none; }
+.enr-student-opt:hover, .enr-student-opt.selected { background: #eff6ff; }
+.enr-student-opt__name { font-weight: 700; font-size: .85rem; color: #0f172a; }
+.enr-student-opt__lrn  { font-size: .75rem; color: #64748b; }
+.enr-student-opt__tag  { font-size: .68rem; font-weight: 700; border-radius: 4px; padding: 1px 6px; background: #fef3c7; color: #92400e; white-space: nowrap; margin-left: 8px; }
 
 /* ── Section preview panel ──────────────── */
 .section-preview { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 12px; display: none; }
@@ -132,17 +136,43 @@
           <input type="hidden" name="academic_year_id" value="{{ $activeAcademicYear?->id }}">
           <input type="hidden" name="grade_level" id="hidden_grade_level">
 
-          {{-- Student Search --}}
+          {{-- Student Dropdown --}}
           <div class="enr-field">
-            <label class="enr-label">Student Name or LRN</label>
+            <label class="enr-label">Select Student</label>
             <div class="enr-search-wrap">
-              <input type="text" id="studentSearch" class="enr-input" placeholder="Type name or LRN to search…" autocomplete="off">
-              <div id="studentSuggestions" class="enr-suggestions"></div>
+              <input type="text" id="studentFilter" class="enr-student-filter" placeholder="🔍  Filter by name or LRN…" oninput="filterStudents(this.value)" autocomplete="off">
+              <div class="enr-student-list" id="studentList">
+                @foreach($allStudents as $s)
+                @php
+                  $currentSection = $s->enrollments->first()?->section?->section_name;
+                @endphp
+                <div class="enr-student-opt"
+                     data-id="{{ $s->id }}"
+                     data-name="{{ $s->full_name }}"
+                     data-lrn="{{ $s->lrn ?? '' }}"
+                     data-section="{{ $currentSection ?? '' }}"
+                     data-search="{{ strtolower($s->full_name . ' ' . ($s->lrn ?? '')) }}"
+                     onclick="selectStudent(this)">
+                  <div>
+                    <div class="enr-student-opt__name">{{ $s->full_name }}</div>
+                    <div class="enr-student-opt__lrn">LRN: {{ $s->lrn ?? 'No LRN' }}</div>
+                  </div>
+                  @if($currentSection)
+                  <span class="enr-student-opt__tag">{{ $currentSection }}</span>
+                  @endif
+                </div>
+                @endforeach
+                @if($allStudents->isEmpty())
+                <div style="padding:20px;text-align:center;color:#94a3b8;font-size:.82rem;">No students found in the system.</div>
+                @endif
+              </div>
             </div>
             <input type="hidden" name="student_id" id="selectedStudentId">
-            <div id="selectedStudentInfo" style="margin-top:8px;font-size:.8rem;color:#475569;display:none;">
-              <strong id="selectedStudentName"></strong> <span id="selectedStudentLrn" style="color:#94a3b8;"></span>
-              <span id="alreadyEnrolledWarning" style="display:none;margin-left:6px;background:#fef3c7;color:#92400e;font-size:.72rem;font-weight:700;border-radius:4px;padding:1px 6px;">Already enrolled</span>
+            <div id="selectedStudentInfo" style="margin-top:8px;font-size:.8rem;color:#475569;display:none;align-items:center;gap:6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#22c55e;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <strong id="selectedStudentName" style="color:#0f172a;"></strong>
+              <span id="selectedStudentLrn" style="color:#94a3b8;"></span>
+              <span id="alreadyEnrolledWarning" style="display:none;background:#fef3c7;color:#92400e;font-size:.72rem;font-weight:700;border-radius:4px;padding:1px 6px;"></span>
             </div>
           </div>
 
@@ -322,56 +352,40 @@
 
 @push('scripts')
 <script>
-const AJAX_SECTIONS_URL  = '{{ route('registrar.ajax.sections') }}';
-const AJAX_STUDENTS_URL  = '{{ route('registrar.ajax.students') }}';
-const AJAX_SECTION_URL   = '{{ route('registrar.ajax.section-info') }}';
-const CSRF_TOKEN         = '{{ csrf_token() }}';
+const AJAX_SECTIONS_URL = '{{ route('registrar.ajax.sections') }}';
+const AJAX_SECTION_URL  = '{{ route('registrar.ajax.section-info') }}';
 
-// ── Student Search Autocomplete ───────────────────────────────────────────
-let searchTimer;
-const searchInput   = document.getElementById('studentSearch');
-const suggestions   = document.getElementById('studentSuggestions');
-const hiddenId      = document.getElementById('selectedStudentId');
-const infoBox       = document.getElementById('selectedStudentInfo');
-const nameSpan      = document.getElementById('selectedStudentName');
-const lrnSpan       = document.getElementById('selectedStudentLrn');
-const enrolledWarn  = document.getElementById('alreadyEnrolledWarning');
+// ── Student List Filter ───────────────────────────────────────────────────
+function filterStudents(q) {
+  const term = q.toLowerCase().trim();
+  document.querySelectorAll('#studentList .enr-student-opt').forEach(el => {
+    el.style.display = (!term || el.dataset.search.includes(term)) ? '' : 'none';
+  });
+}
 
-searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimer);
-  const q = searchInput.value.trim();
-  if (q.length < 2) { suggestions.style.display = 'none'; return; }
-  searchTimer = setTimeout(() => {
-    fetch(AJAX_STUDENTS_URL + '?q=' + encodeURIComponent(q))
-      .then(r => r.json())
-      .then(data => {
-        if (!data.length) { suggestions.style.display = 'none'; return; }
-        suggestions.innerHTML = data.map(s => `
-          <div class="enr-suggestion" onclick="selectStudent(${s.id},'${escHtml(s.full_name)}','${s.lrn}','${s.enrolled_in || ''}')">
-            <div class="enr-suggestion__name">${escHtml(s.full_name)}</div>
-            <div class="enr-suggestion__meta">LRN: ${s.lrn}
-              ${s.enrolled_in ? `<span class="enr-suggestion__tag enrolled">Enrolled in ${escHtml(s.enrolled_in)}</span>` : ''}
-            </div>
-          </div>
-        `).join('');
-        suggestions.style.display = 'block';
-      });
-  }, 280);
-});
+function selectStudent(el) {
+  // Clear previous selection
+  document.querySelectorAll('#studentList .enr-student-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
 
-document.addEventListener('click', e => {
-  if (!e.target.closest('.enr-search-wrap')) suggestions.style.display = 'none';
-});
+  const id      = el.dataset.id;
+  const name    = el.dataset.name;
+  const lrn     = el.dataset.lrn;
+  const section = el.dataset.section;
 
-function selectStudent(id, name, lrn, currentSection) {
-  hiddenId.value = id;
-  searchInput.value = name;
-  suggestions.style.display = 'none';
-  nameSpan.textContent = name;
-  lrnSpan.textContent  = '(' + lrn + ')';
-  enrolledWarn.style.display = currentSection ? 'inline' : 'none';
-  if (currentSection) enrolledWarn.textContent = 'Already in ' + currentSection;
-  infoBox.style.display = 'flex';
+  document.getElementById('selectedStudentId').value = id;
+  document.getElementById('selectedStudentName').textContent = name;
+  document.getElementById('selectedStudentLrn').textContent  = lrn ? '(' + lrn + ')' : '';
+
+  const warn = document.getElementById('alreadyEnrolledWarning');
+  if (section) {
+    warn.textContent     = 'Already in ' + section;
+    warn.style.display   = 'inline';
+  } else {
+    warn.style.display   = 'none';
+  }
+
+  document.getElementById('selectedStudentInfo').style.display = 'flex';
   checkEnrollBtn();
 }
 
