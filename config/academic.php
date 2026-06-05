@@ -36,4 +36,8 @@ return [
 
     // ── Audit log retention in years (used by audit:prune command) ────────
     'audit_retention_years' => env('AUDIT_RETENTION_YEARS', 2),
+
+    // ── Schedule duration rule (per adviser feedback) ──────────────────────
+    // Minimum block length only — there is intentionally no maximum.
+    'schedule_min_hours' => env('SCHEDULE_MIN_HOURS', 2.0),
 ];

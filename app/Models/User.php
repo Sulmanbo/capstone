@@ -279,6 +279,11 @@ class User extends Authenticatable
         return $this->hasMany(Enrollment::class, 'student_id');
     }
 
+    public function payments()
+    {
+        return $this->hasMany(\App\Models\Payment::class, 'student_id');
+    }
+
     public function activeEnrollment()
     {
         return $this->hasOne(Enrollment::class, 'student_id')
@@ -293,5 +298,15 @@ class User extends Authenticatable
     public function threatEvents()
     {
         return $this->hasMany(ThreatEvent::class, 'user_id');
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id');
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
     }
 }

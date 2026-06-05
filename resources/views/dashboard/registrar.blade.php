@@ -41,7 +41,7 @@
       $pClass = match($p) { 'urgent','high' => 'high', 'medium' => 'medium', default => 'low' };
       $pLabel = match($p) { 'urgent' => 'Urgent', 'high' => 'High', 'medium' => 'Medium', default => 'Notice' };
     @endphp
-    <div class="sd-announce-item sd-announce-item--{{ $pClass }}" style="animation-delay:{{ $i * 0.08 }}s" data-ann>
+    <div class="sd-announce-item sd-announce-item--{{ $pClass }}" style="animation-delay:{{ $i * 0.08 }}s" data-ann="{{ $ann->id }}">
       <div class="sd-announce-icon">
         @if($pClass === 'high')
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
@@ -57,7 +57,7 @@
         <div class="sd-announce-date">{{ $ann->created_at->format('M d, Y') }}</div>
       </div>
       <span class="sd-priority-badge badge--{{ $pClass }}">{{ $pLabel }}</span>
-      <button class="sd-dismiss-btn" onclick="this.closest('[data-ann]').style.display='none'" title="Dismiss">
+      <button class="sd-dismiss-btn" onclick="dismissAnn({{ $ann->id }}, this)" title="Dismiss">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
@@ -304,4 +304,30 @@
   </div>
 </div>
 
+@push('scripts')
+<script>
+(function () {
+  const KEY = 'enc_dismissed_ann_{{ auth()->id() }}';
+  function getDismissed() { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e) { return []; } }
+  function saveDismissed(list) { localStorage.setItem(KEY, JSON.stringify(list)); }
+
+  // Hide already-dismissed items on load
+  const dismissed = getDismissed();
+  document.querySelectorAll('[data-ann]').forEach(function (el) {
+    if (dismissed.includes(String(el.dataset.ann))) el.style.display = 'none';
+  });
+
+  window.dismissAnn = function (id, btn) {
+    const el = btn.closest('[data-ann]');
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(20px)';
+    el.style.transition = 'opacity .2s, transform .2s';
+    setTimeout(function () { el.style.display = 'none'; }, 200);
+    const list = getDismissed();
+    if (!list.includes(String(id))) list.push(String(id));
+    saveDismissed(list);
+  };
+})();
+</script>
+@endpush
 @endsection

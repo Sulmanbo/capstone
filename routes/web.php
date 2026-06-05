@@ -58,11 +58,12 @@ Route::get('/report-card/{student}/download', [\App\Http\Controllers\ReportCardC
 Route::get('/verify/{token}', [\App\Http\Controllers\ReportCardController::class, 'verify'])
     ->name('report-card.verify');
 
-// ── Public Applicant Onboarding ───────────────────────────────────────────
-Route::get( '/apply',          [\App\Http\Controllers\ApplicantController::class, 'create'])->name('apply');
-Route::post('/apply',          [\App\Http\Controllers\ApplicantController::class, 'store']) ->name('apply.store')
-    ->middleware('throttle:10,5'); // 10 submissions per 5 minutes per IP
-Route::get( '/apply/thanks/{reference}', [\App\Http\Controllers\ApplicantController::class, 'thanks'])->name('apply.thanks');
+// ── Public Applicant Onboarding — REMOVED (out of scope: grading management only) ──
+
+// ── Global Academic-Year Context (header selector, all roles) ──────────────
+Route::post('/academic-year/switch', [\App\Http\Controllers\AcademicYearContextController::class, 'switch'])
+    ->middleware('auth')
+    ->name('academic-year.switch');
 
 // ── Mandatory First-Login Password Reset ──────────────────────────────────
 Route::middleware('auth')->group(function () {
@@ -73,10 +74,19 @@ Route::middleware('auth')->group(function () {
 // ── Admin Routes ──────────────────────────────────────────────────────────
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
 
+    // ── Payments & Enrollment Fees (pay-first policy) ────────────────────
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/',                      [\App\Http\Controllers\Admin\PaymentController::class, 'index'])   ->name('index');
+        Route::post('/{payment}/confirm',    [\App\Http\Controllers\Admin\PaymentController::class, 'confirm']) ->name('confirm');
+        Route::post('/{payment}/reject',     [\App\Http\Controllers\Admin\PaymentController::class, 'reject'])  ->name('reject');
+        Route::get('/fees',                  [\App\Http\Controllers\Admin\PaymentController::class, 'fees'])    ->name('fees');
+        Route::post('/fees',                 [\App\Http\Controllers\Admin\PaymentController::class, 'storeFee'])->name('fees.store');
+    });
+
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/security-settings', fn() => 'Security Settings — coming soon')->name('security-settings');
-    Route::get('/grades', fn() => 'Grades & Records — coming soon')->name('grades.index');
+    Route::get('/security-settings', [\App\Http\Controllers\Settings\AdminSettingsController::class, 'index'])->name('security-settings');
+    Route::get('/grades', [\App\Http\Controllers\Admin\AdminGradesController::class, 'index'])->name('grades.index');
 
     // ── User Management ───────────────────────────────────────────────────
     Route::prefix('users')->name('users.')->group(function () {
@@ -94,7 +104,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::prefix('students')->name('students.')->group(function () {
         Route::get('/',          [StudentController::class,       'index'])    ->name('index');
         Route::get('/import',    [\App\Http\Controllers\Admin\StudentImportController::class, 'showForm'])->name('import');
-        Route::post('/import',   [\App\Http\Controllers\Admin\StudentImportController::class, 'import'])  ->name('import');
+        Route::post('/import',   [\App\Http\Controllers\Admin\StudentImportController::class, 'import'])  ->name('import.submit');
         Route::get('/import/template', function () {
             $csv = implode("\n", [
                 'first_name,last_name,email,lrn,grade_level,section_name,gender,phone,address',
@@ -121,19 +131,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     // ── Registrar Module — Dashboard ──────────────────────────────────────
     Route::get('/registrar-dashboard', [RegistrarDashboardController::class, 'index'])->name('registrar-dashboard');
 
-    // ── Applicant Management ──────────────────────────────────────────────
-    Route::prefix('applicants')->name('applicants.')->group(function () {
-        Route::get('/',               [\App\Http\Controllers\Admin\ApplicantManagementController::class, 'index'])       ->name('index');
-        Route::get('/{applicant}',    [\App\Http\Controllers\Admin\ApplicantManagementController::class, 'show'])        ->name('show');
-        Route::patch('/{applicant}/status', [\App\Http\Controllers\Admin\ApplicantManagementController::class, 'updateStatus'])->name('update-status');
-    });
-
-    // ── Entrance Test Results ─────────────────────────────────────────────
-    Route::prefix('entrance-tests')->name('entrance-tests.')->group(function () {
-        Route::get('/',                     [EntranceTestController::class, 'index'])  ->name('index');
-        Route::get('/{applicant}/record',   [EntranceTestController::class, 'create']) ->name('create');
-        Route::post('/{applicant}/record',  [EntranceTestController::class, 'store'])  ->name('store');
-    });
+    // ── Applicant Management — REMOVED (out of scope: grading management only) ──
+    // ── Entrance Test Results   — REMOVED (out of scope: grading management only) ──
 
     // ── Academic Years Management ─────────────────────────────────────────
     Route::prefix('academic-years')->name('academic-years.')->group(function () {
@@ -142,7 +141,27 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::post('/',               [AcademicYearController::class, 'store'])   ->name('store');
         Route::get('/{academicYear}/edit', [AcademicYearController::class, 'edit']) ->name('edit');
         Route::put('/{academicYear}',  [AcademicYearController::class, 'update'])  ->name('update');
+        Route::patch('/{academicYear}/toggle', [AcademicYearController::class, 'toggle'])->name('toggle');
         Route::delete('/{academicYear}', [AcademicYearController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Classrooms Management (FRS §Classroom Module per adviser) ────────
+    Route::prefix('classrooms')->name('classrooms.')->group(function () {
+        Route::get('/',                        [\App\Http\Controllers\Admin\ClassroomController::class, 'index'])  ->name('index');
+        Route::post('/',                       [\App\Http\Controllers\Admin\ClassroomController::class, 'store'])  ->name('store');
+        Route::put('/{classroom}',             [\App\Http\Controllers\Admin\ClassroomController::class, 'update']) ->name('update');
+        Route::delete('/{classroom}',          [\App\Http\Controllers\Admin\ClassroomController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── Sections Management ──────────────────────────────────────────────
+    Route::prefix('sections')->name('sections.')->group(function () {
+        Route::get('/',                  [\App\Http\Controllers\Admin\SectionController::class, 'index'])  ->name('index');
+        Route::post('/',                 [\App\Http\Controllers\Admin\SectionController::class, 'store'])  ->name('store');
+        Route::put('/{section}',         [\App\Http\Controllers\Admin\SectionController::class, 'update']) ->name('update');
+        Route::delete('/{section}',      [\App\Http\Controllers\Admin\SectionController::class, 'destroy'])->name('destroy');
+        Route::get('/{section}/roster',  [\App\Http\Controllers\Admin\SectionController::class, 'roster']) ->name('roster');
+        Route::post('/{section}/enroll', [\App\Http\Controllers\Admin\SectionController::class, 'enrollStudents'])->name('enroll');
+        Route::delete('/{section}/remove-student', [\App\Http\Controllers\Admin\SectionController::class, 'removeStudent'])->name('remove-student');
     });
 
     // ── Grading Quarters Management ───────────────────────────────────────
@@ -184,7 +203,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     });
 
     // ── Threat Monitoring & Audit ─────────────────────────────────────────
-    Route::get('/audit',             [AuditLogController::class,  'index']) ->name('audit.index');
+    Route::get('/audit',             [AuditLogController::class,  'index'])    ->name('audit.index');
+    Route::get('/audit/export.pdf',  [AuditLogController::class,  'exportPdf'])->name('audit.export-pdf');
     Route::get('/threats',           [ThreatController::class,    'index']) ->name('threat.index');
     Route::get('/compliance',        [ComplianceController::class, 'index'])->name('compliance.index');
     Route::get('/compliance/export', [ComplianceController::class, 'export'])->name('compliance.export');
@@ -197,12 +217,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
         Route::patch('/{announcement}/toggle',    [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggle']) ->name('toggle');
     });
 
-    // ── Faculty Schedules ─────────────────────────────────────────────────
+    // ── Schedule Management (formerly Faculty Schedules; per adviser feedback) ──
+    // Schedules are created first; faculty assignment is the last step and may
+    // be left as "TBA". Uses cascading dropdowns rather than free-text fields.
     Route::prefix('schedules')->name('schedules.')->group(function () {
-        Route::get('/',              [\App\Http\Controllers\Admin\FacultyScheduleController::class, 'index'])  ->name('index');
-        Route::post('/',             [\App\Http\Controllers\Admin\FacultyScheduleController::class, 'store'])  ->name('store');
-        Route::put('/{schedule}',    [\App\Http\Controllers\Admin\FacultyScheduleController::class, 'update']) ->name('update');
-        Route::delete('/{schedule}', [\App\Http\Controllers\Admin\FacultyScheduleController::class, 'destroy'])->name('destroy');
+        Route::get('/',                                  [\App\Http\Controllers\Admin\ScheduleController::class, 'index'])     ->name('index');
+        Route::get('/create',                            [\App\Http\Controllers\Admin\ScheduleController::class, 'create'])    ->name('create');
+        Route::post('/',                                 [\App\Http\Controllers\Admin\ScheduleController::class, 'store'])     ->name('store');
+        Route::get('/{schedule}/edit',                   [\App\Http\Controllers\Admin\ScheduleController::class, 'edit'])      ->name('edit');
+        Route::put('/{schedule}',                        [\App\Http\Controllers\Admin\ScheduleController::class, 'update'])    ->name('update');
+        Route::delete('/{schedule}',                     [\App\Http\Controllers\Admin\ScheduleController::class, 'destroy'])   ->name('destroy');
+        Route::post('/{schedule}/assign-faculty',        [\App\Http\Controllers\Admin\ScheduleController::class, 'assignFaculty'])->name('assign-faculty');
+        // AJAX endpoint for cascading subject dropdown
+        Route::get('/subjects-for-section/{section}',    [\App\Http\Controllers\Admin\ScheduleController::class, 'subjectsForSection'])->name('subjects-for-section');
+        Route::post('/check-conflict',                   [\App\Http\Controllers\Admin\ScheduleController::class, 'checkConflict'])->name('check-conflict');
     });
 
     // ── Admin Settings ────────────────────────────────────────────────────
@@ -215,8 +243,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
 // ── Notifications ─────────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {
-    Route::get('/notifications',         [\App\Http\Controllers\NotificationController::class, 'index'])   ->name('notifications.index');
-    Route::patch('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::get('/notifications',              [\App\Http\Controllers\NotificationController::class, 'index'])           ->name('notifications.index');
+    Route::get('/notifications/unread-count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])       ->name('notifications.unread-count');
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markRead'])   ->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])     ->name('notifications.mark-all-read');
 });
 
 // ── Role-Specific Dashboard Routes ────────────────────────────────────────
@@ -232,12 +262,24 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/registrar/grades',         [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'grades'])        ->name('registrar.grades');
         Route::get('/registrar/calendar',       [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'calendar'])      ->name('registrar.calendar');
         Route::get('/registrar/announcements',  [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'announcements']) ->name('registrar.announcements');
+        Route::post('/registrar/announcements', [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'postAnnouncement'])->name('registrar.announcements.store');
 
         // Enrollment (with prerequisite enforcement)
-        Route::post('/registrar/enroll', [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'enroll'])->name('registrar.enroll');
+        Route::post('/registrar/enroll',          [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'enroll'])->name('registrar.enroll');
+        Route::post('/registrar/drop-enrollment', [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'dropEnrollment'])->name('registrar.drop-enrollment');
+        // AJAX helpers for cascading dropdowns
+        Route::get('/registrar/ajax/sections',    [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'ajaxSections'])->name('registrar.ajax.sections');
+        Route::get('/registrar/ajax/students',    [App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'ajaxStudents'])->name('registrar.ajax.students');
+        Route::get('/registrar/ajax/section-info',[App\Http\Controllers\Dashboard\RegistrarUserDashboardController::class, 'ajaxSectionInfo'])->name('registrar.ajax.section-info');
 
         // Grade finalization
         Route::post('/registrar/gradebook/{sectionSubject}/finalize', [App\Http\Controllers\Dashboard\GradebookController::class, 'finalize'])->name('registrar.gradebook.finalize');
+
+        // Grade verification & finalization
+        Route::post('/registrar/grades/{grade}/finalize', [App\Http\Controllers\Dashboard\GradeVerificationController::class, 'finalize'])->name('registrar.grades.finalize');
+        Route::post('/registrar/grades/{grade}/lock',     [App\Http\Controllers\Dashboard\GradeVerificationController::class, 'lock'])    ->name('registrar.grades.lock');
+        Route::post('/registrar/grades/{grade}/unlock',   [App\Http\Controllers\Dashboard\GradeVerificationController::class, 'unlock'])  ->name('registrar.grades.unlock');
+        Route::post('/registrar/grades/finalize-bulk',    [App\Http\Controllers\Dashboard\GradeVerificationController::class, 'bulkFinalize'])->name('registrar.grades.bulk-finalize');
 
         // Grade lock management
         Route::get( '/registrar/grade-lock',                                       [App\Http\Controllers\Admin\GradeLockController::class, 'index'])         ->name('registrar.grade-lock.index');
@@ -245,6 +287,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/registrar/grade-lock/lock-all',                              [App\Http\Controllers\Admin\GradeLockController::class, 'lockAll'])        ->name('registrar.grade-lock.lock-all');
         Route::post('/registrar/grade-lock/unlock-requests/{unlockRequest}/approve', [App\Http\Controllers\Admin\GradeLockController::class, 'approveUnlock'])->name('registrar.grade-lock.approve');
         Route::post('/registrar/grade-lock/unlock-requests/{unlockRequest}/deny',    [App\Http\Controllers\Admin\GradeLockController::class, 'denyUnlock'])   ->name('registrar.grade-lock.deny');
+
+        // Student Promotion and Advancement
+        Route::get( '/registrar/promotion', [App\Http\Controllers\Dashboard\PromotionController::class, 'index'])   ->name('registrar.promotion');
+        Route::post('/registrar/promotion', [App\Http\Controllers\Dashboard\PromotionController::class, 'promote']) ->name('registrar.promotion.promote');
+
+        // Aggregate Reports (honor roll + academic intervention)
+        Route::get('/registrar/reports/aggregate', [App\Http\Controllers\Dashboard\AggregateReportController::class, 'index'])->name('registrar.reports.aggregate');
     });
 
     // Faculty Dashboard & Pages
@@ -252,15 +301,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/faculty/dashboard',      [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'index'])       ->name('faculty.dashboard');
         Route::get('/faculty/my-classes',     [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'myClasses'])   ->name('faculty.classes');
         Route::get('/faculty/gradebook',      [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'gradebook'])   ->name('faculty.gradebook');
-        Route::get('/faculty/attendance',     [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'attendance'])  ->name('faculty.attendance');
+        Route::get('/faculty/attendance',     [App\Http\Controllers\Dashboard\AttendanceController::class,        'index'])  ->name('faculty.attendance');
+        Route::post('/faculty/attendance',    [App\Http\Controllers\Dashboard\AttendanceController::class,        'store'])  ->name('faculty.attendance.store');
         Route::get('/faculty/my-schedule',    [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'mySchedule'])  ->name('faculty.my-schedule');
         Route::get('/faculty/announcements',  [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'announcements'])->name('faculty.announcements');
+        Route::post('/faculty/announcements', [App\Http\Controllers\Dashboard\FacultyDashboardController::class, 'postAnnouncement'])->name('faculty.announcements.store');
 
         // Grade entry workflow
         Route::get( '/faculty/gradebook/{sectionSubject}',                     [App\Http\Controllers\Dashboard\GradebookController::class, 'show'])          ->name('faculty.gradebook.show');
         Route::post('/faculty/gradebook/{sectionSubject}/save-draft',          [App\Http\Controllers\Dashboard\GradebookController::class, 'saveDraft'])      ->name('faculty.gradebook.save-draft');
         Route::post('/faculty/gradebook/{sectionSubject}/submit',              [App\Http\Controllers\Dashboard\GradebookController::class, 'submit'])         ->name('faculty.gradebook.submit');
         Route::post('/faculty/gradebook/{sectionSubject}/request-unlock',      [App\Http\Controllers\Dashboard\GradebookController::class, 'requestUnlock'])  ->name('faculty.gradebook.request-unlock');
+
+        // Dropped student workflow
+        Route::post('/faculty/gradebook/{sectionSubject}/drop',      [App\Http\Controllers\Dashboard\GradebookController::class, 'dropStudent'])      ->name('faculty.gradebook.drop');
+        Route::post('/faculty/gradebook/{sectionSubject}/reinstate',  [App\Http\Controllers\Dashboard\GradebookController::class, 'reinstateStudent']) ->name('faculty.gradebook.reinstate');
+
+        // Faculty Inbox / Messaging
+        Route::get( '/faculty/inbox',                  [App\Http\Controllers\Dashboard\MessageController::class, 'facultyInbox']) ->name('faculty.inbox');
+        Route::get( '/faculty/inbox/{message}',        [App\Http\Controllers\Dashboard\MessageController::class, 'facultyShow'])  ->name('faculty.inbox.show');
+        Route::post('/faculty/inbox/{message}/reply',  [App\Http\Controllers\Dashboard\MessageController::class, 'facultyReply']) ->name('faculty.inbox.reply');
     });
 
     // Student Dashboard
@@ -271,6 +331,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/student/report-card', [App\Http\Controllers\Dashboard\StudentDashboardController::class, 'reportCard'])
         ->middleware('role:student')
         ->name('student.report-card');
+
+    Route::get('/student/grade-archive', [App\Http\Controllers\Dashboard\StudentDashboardController::class, 'gradeArchive'])
+        ->middleware('role:student')
+        ->name('student.grade-archive');
+
+    // ── Student Payments (pay-first enrollment) ──────────────────────────
+    Route::middleware('role:student')->group(function () {
+        Route::get( '/student/payments',        [App\Http\Controllers\Dashboard\PaymentController::class, 'index'])  ->name('student.payments.index');
+        Route::post('/student/payments',        [App\Http\Controllers\Dashboard\PaymentController::class, 'submit']) ->name('student.payments.submit');
+    });
 
     Route::get('/student/academic-holds', [App\Http\Controllers\Dashboard\StudentDashboardController::class, 'academicHolds'])
         ->middleware('role:student')
@@ -295,6 +365,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/student/schedule', [App\Http\Controllers\Dashboard\StudentDashboardController::class, 'schedule'])
         ->middleware('role:student')
         ->name('student.schedule');
+
+    Route::get('/student/attendance', [App\Http\Controllers\Dashboard\StudentAttendanceController::class, 'index'])
+        ->middleware('role:student')
+        ->name('student.attendance');
+
+    // ── Student Inbox / Messaging ─────────────────────────────────────────
+    Route::middleware('role:student')->prefix('student/inbox')->name('student.inbox')->group(function () {
+        Route::get('/',            [App\Http\Controllers\Dashboard\MessageController::class, 'studentInbox']) ->name('');
+        Route::post('/',           [App\Http\Controllers\Dashboard\MessageController::class, 'studentStore']) ->name('.store');
+        Route::get('/{message}',   [App\Http\Controllers\Dashboard\MessageController::class, 'studentShow'])  ->name('.show');
+    });
 
     // ── Student Settings ──────────────────────────────────────────────────
     Route::middleware('role:student')->prefix('student/settings')->name('student.settings.')->group(function () {
@@ -333,5 +414,56 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:faculty,registrar,admin')->group(function () {
         Route::get(  '/complaints/manage',              [\App\Http\Controllers\GradeComplaintController::class, 'manage'])  ->name('complaints.manage');
         Route::patch('/complaints/{complaint}/respond', [\App\Http\Controllers\GradeComplaintController::class, 'respond']) ->name('complaints.respond');
+    });
+
+    // ── School Calendar ───────────────────────────────────────────────────
+    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('calendar.index');
+    Route::post('/calendar', [\App\Http\Controllers\CalendarController::class, 'store'])->name('calendar.store')->middleware('role:registrar,admin');
+    Route::delete('/calendar/{calendarEvent}', [\App\Http\Controllers\CalendarController::class, 'destroy'])->name('calendar.destroy')->middleware('role:registrar,admin');
+
+    // ── Document Requests ─────────────────────────────────────────────────
+    Route::middleware('role:student')->group(function () {
+        Route::get( '/documents',       [\App\Http\Controllers\DocumentRequestController::class, 'studentIndex'])->name('documents.student.index');
+        Route::post('/documents',       [\App\Http\Controllers\DocumentRequestController::class, 'studentStore'])->name('documents.student.store');
+    });
+    Route::middleware('role:registrar,admin')->group(function () {
+        Route::get(  '/registrar/documents',                         [\App\Http\Controllers\DocumentRequestController::class, 'registrarIndex'])->name('documents.registrar.index');
+        Route::patch('/registrar/documents/{documentRequest}/status',[\App\Http\Controllers\DocumentRequestController::class, 'updateStatus'])->name('documents.update-status');
+        Route::post( '/registrar/documents/bulk-update',             [\App\Http\Controllers\DocumentRequestController::class, 'bulkUpdate'])->name('documents.bulk-update');
+    });
+
+    // ── Faculty Leave Requests ────────────────────────────────────────────
+    Route::middleware('role:faculty')->group(function () {
+        Route::get( '/faculty/leave',       [\App\Http\Controllers\LeaveRequestController::class, 'facultyIndex'])->name('leave.faculty.index');
+        Route::post('/faculty/leave',       [\App\Http\Controllers\LeaveRequestController::class, 'facultyStore'])->name('leave.faculty.store');
+    });
+    Route::middleware('role:registrar,admin')->group(function () {
+        Route::get(  '/admin/leave',                        [\App\Http\Controllers\LeaveRequestController::class, 'adminIndex'])->name('leave.admin.index');
+        Route::patch('/admin/leave/{leaveRequest}/review',  [\App\Http\Controllers\LeaveRequestController::class, 'review'])->name('leave.review');
+        Route::post( '/admin/leave/bulk-review',            [\App\Http\Controllers\LeaveRequestController::class, 'bulkReview'])->name('leave.bulk-review');
+    });
+
+    // ── Assignments ────────────────────────────────────────────────────────
+    Route::middleware('role:faculty')->group(function () {
+        Route::get( '/faculty/assignments',              [\App\Http\Controllers\AssignmentController::class, 'facultyIndex'])->name('assignments.faculty.index');
+        Route::post('/faculty/assignments',              [\App\Http\Controllers\AssignmentController::class, 'facultyStore'])->name('assignments.faculty.store');
+        Route::get( '/faculty/assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'facultyShow'])->name('assignments.faculty.show');
+        Route::patch('/faculty/assignments/{assignment}/publish', [\App\Http\Controllers\AssignmentController::class, 'publish'])->name('assignments.publish');
+        Route::patch('/faculty/assignments/submissions/{submission}/grade', [\App\Http\Controllers\AssignmentController::class, 'gradeSubmission'])->name('assignments.grade');
+    });
+    Route::middleware('role:student')->group(function () {
+        Route::get( '/student/assignments',                     [\App\Http\Controllers\AssignmentController::class, 'studentIndex'])->name('assignments.student.index');
+        Route::post('/student/assignments/{assignment}/submit', [\App\Http\Controllers\AssignmentController::class, 'studentSubmit'])->name('assignments.student.submit');
+    });
+
+    // ── Analytics Dashboard ────────────────────────────────────────────────
+    Route::middleware('role:registrar,admin')->get('/analytics', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
+
+    // ── DepEd SF Forms ────────────────────────────────────────────────────
+    Route::middleware('role:registrar,admin')->prefix('sf-forms')->name('sf.')->group(function () {
+        Route::get('/sf1',  [\App\Http\Controllers\SFFormController::class, 'sf1'])->name('sf1');
+        Route::get('/sf2',  [\App\Http\Controllers\SFFormController::class, 'sf2'])->name('sf2');
+        Route::get('/sf9',  [\App\Http\Controllers\SFFormController::class, 'sf9'])->name('sf9');
+        Route::get('/sf10', [\App\Http\Controllers\SFFormController::class, 'sf10'])->name('sf10');
     });
 });

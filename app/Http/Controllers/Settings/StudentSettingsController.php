@@ -60,7 +60,9 @@ class StudentSettingsController extends Controller
 
         AuditLog::record('settings_updated', ['section' => 'preferences'], $user->id, $user->full_name);
 
-        return back()->with('success_prefs', 'Preferences saved.');
+        $key = $request->input('_source') === 'display' ? 'success_display' : 'success_prefs';
+
+        return back()->with($key, 'Preferences saved.');
     }
 
     public function updatePassword(Request $request)

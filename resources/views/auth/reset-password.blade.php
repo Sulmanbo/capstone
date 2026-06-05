@@ -20,22 +20,22 @@
       content: '';
       position: fixed; inset: 0;
       background-image:
-        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
-      background-size: 40px 40px;
+        linear-gradient(rgba(251, 191, 36, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(251, 191, 36, .04) 1px, transparent 1px);
+      background-size: 48px 48px;
       pointer-events: none;
     }
     .card {
       width: 100%; max-width: 440px;
-      background: white; border-radius: 16px;
+      background: white; border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 24px 60px rgba(0,0,0,.4);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .5), 0 0 0 1px rgba(251, 191, 36, .15);
       animation: fadeUp .35s ease both;
       position: relative; z-index: 1;
     }
     .card::before {
-      content: ''; display: block; height: 4px;
-      background: linear-gradient(90deg, var(--accent-green) 0%, var(--accent-blue) 100%);
+      content: ''; display: block; height: 5px;
+      background: linear-gradient(90deg, var(--success) 0%, var(--yellow) 100%);
     }
     .card-header {
       padding: 28px 36px 20px;
@@ -62,7 +62,7 @@
       font-size: .875rem; color: var(--gray-700); font-family: var(--font-body);
       background: white; outline: none; transition: border-color .15s, box-shadow .15s;
     }
-    .input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    .input:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(251, 191, 36, .2); }
     .input.is-error { border-color: var(--danger); }
     .toggle-icon {
       position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
@@ -81,12 +81,20 @@
     .pw-rule .check { display:none; } .pw-rule .cross { display:block; }
     .pw-rule.met .check { display:block; } .pw-rule.met .cross { display:none; }
     .submit {
-      width: 100%; height: 46px; background: var(--navy); color: white;
-      border: none; border-radius: var(--radius-md); font-size: .9rem; font-weight: 700;
-      font-family: var(--font-body); cursor: pointer; transition: background .15s;
+      width: 100%; height: 48px;
+      background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
+      color: white;
+      border: 1.5px solid var(--navy); border-radius: var(--radius-md);
+      font-size: .92rem; font-weight: 700;
+      font-family: var(--font-body); cursor: pointer; transition: all .2s;
       display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 4px 10px rgba(10, 31, 68, .2);
     }
-    .submit:hover { background: var(--navy-light); }
+    .submit:hover {
+      background: linear-gradient(180deg, var(--navy-hover) 0%, var(--navy-light) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 8px 16px rgba(10, 31, 68, .3);
+    }
     .submit svg { width: 16px; height: 16px; }
     .card-footer {
       padding: 12px 36px 16px; border-top: 1px solid var(--gray-100);

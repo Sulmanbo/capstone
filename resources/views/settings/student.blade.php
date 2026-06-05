@@ -171,8 +171,8 @@
 
       {{-- Display Options --}}
       <div id="tab-display" class="st-tab" style="display:none;">
-        @if(session('success_prefs'))
-          <div class="st-alert st-alert--success">{{ session('success_prefs') }}</div>
+        @if(session('success_display'))
+          <div class="st-alert st-alert--success">{{ session('success_display') }}</div>
         @endif
         <div class="st-card">
           <div class="st-card__head">
@@ -181,16 +181,19 @@
           </div>
           <form method="POST" action="{{ route('student.settings.preferences') }}">
             @csrf
+            <input type="hidden" name="_source" value="display">
             <input type="hidden" name="email_notifications" value="{{ $user->pref('email_notifications', true) ? '1' : '0' }}">
             <input type="hidden" name="sms_notifications"   value="{{ $user->pref('sms_notifications') ? '1' : '0' }}">
             <div class="st-card__body">
               <div class="st-toggle-row">
                 <div class="st-toggle-info">
-                  <div class="st-toggle-label">Dark Mode <span class="st-badge">Coming Soon</span></div>
+                  <div class="st-toggle-label">Dark Mode</div>
                   <div class="st-toggle-desc">Switch the portal to a darker color scheme.</div>
                 </div>
                 <label class="sw">
-                  <input type="checkbox" name="dark_mode" value="1" {{ $user->pref('dark_mode') ? 'checked' : '' }} disabled>
+                  <input type="checkbox" name="dark_mode" value="1" id="dark_mode_toggle"
+                         {{ $user->pref('dark_mode') ? 'checked' : '' }}
+                         onchange="document.body.classList.toggle('dark-mode', this.checked); localStorage.setItem('dark_mode', this.checked ? '1' : '0');">
                   <span class="sw__track"></span><span class="sw__thumb"></span>
                 </label>
               </div>
@@ -257,6 +260,7 @@ stSwitch(initTab, document.querySelector('[onclick*="' + initTab + '"]'));
 @if($errors->any()) stSwitch('password', document.querySelector('[onclick*="password"]')); @endif
 @if(session('success_password')) stSwitch('password', document.querySelector('[onclick*="password"]')); @endif
 @if(session('success_emergency')) stSwitch('emergency', document.querySelector('[onclick*="emergency"]')); @endif
-@if(session('success_prefs')) stSwitch('notifications', document.querySelector('[onclick*="notifications"]')); @endif
+@if(session('success_prefs'))    stSwitch('notifications', document.querySelector('[onclick*="notifications"]')); @endif
+@if(session('success_display'))  stSwitch('display',        document.querySelector('[onclick*="display"]'));       @endif
 </script>
 @endpush

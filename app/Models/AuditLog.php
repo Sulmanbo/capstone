@@ -65,7 +65,18 @@ class AuditLog extends Model
     public const REPORT_CARD_GENERATED     = 'REPORT_CARD_GENERATED';
     public const REPORT_CARD_VERIFIED      = 'REPORT_CARD_VERIFIED';
     public const ENROLLMENT_CREATED        = 'ENROLLMENT_CREATED';
+    public const ENROLLMENT_DROPPED        = 'ENROLLMENT_DROPPED';
     public const ENROLLMENT_BLOCKED_PREREQUISITE = 'ENROLLMENT_BLOCKED_PREREQUISITE';
+    public const ENROLLMENT_BLOCKED_UNPAID = 'ENROLLMENT_BLOCKED_UNPAID';
+    public const STUDENT_PROMOTED          = 'STUDENT_PROMOTED';
+    public const PAYMENT_SUBMITTED         = 'PAYMENT_SUBMITTED';
+    public const PAYMENT_CONFIRMED         = 'PAYMENT_CONFIRMED';
+    public const PAYMENT_REJECTED          = 'PAYMENT_REJECTED';
+    public const ENROLLMENT_FEE_UPDATED    = 'ENROLLMENT_FEE_UPDATED';
+    public const ATTENDANCE_RECORDED       = 'ATTENDANCE_RECORDED';
+    public const ATTENDANCE_UPDATED        = 'ATTENDANCE_UPDATED';
+    public const AUDIT_LOG_EXPORTED        = 'AUDIT_LOG_EXPORTED';
+    public const RATE_LIMIT_EXCEEDED       = 'RATE_LIMIT_EXCEEDED';
 
     // ══════════════════════════════════════════════════════════════════════
     // STATIC HELPER — use this everywhere instead of ::create() directly

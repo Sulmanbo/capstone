@@ -21,7 +21,7 @@ class CurriculumMappingController extends Controller
      */
     public function index(Request $request)
     {
-        $academicYearId = $request->input('academic_year_id');
+        $academicYearId = $request->input('academic_year_id') ?? AcademicYear::currentId();
         $gradeLevel = $request->input('grade_level');
         $status = $request->input('status');
         
@@ -60,7 +60,7 @@ class CurriculumMappingController extends Controller
      */
     public function create(Request $request)
     {
-        $academicYearId = $request->input('academic_year_id');
+        $academicYearId = $request->input('academic_year_id') ?? AcademicYear::currentId();
         $gradeLevel = $request->input('grade_level');
 
         $academicYear = $academicYearId ? AcademicYear::findOrFail($academicYearId) : null;

@@ -12,7 +12,10 @@
   <style>
     /* ── Login Page Overrides ───────────────────── */
     body {
-      background: var(--navy-dark);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(251, 191, 36, .08), transparent 60%),
+        radial-gradient(900px 500px at 90% 90%, rgba(28, 58, 110, .35), transparent 60%),
+        var(--navy-dark);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -26,30 +29,48 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
-      background-size: 40px 40px;
+        linear-gradient(rgba(251, 191, 36, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(251, 191, 36, .04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    /* Floating yellow orb accents */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -120px;
+      right: -120px;
+      width: 360px;
+      height: 360px;
+      background: radial-gradient(circle, rgba(251, 191, 36, .12) 0%, transparent 70%);
       pointer-events: none;
     }
 
     .login-card {
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
       background: white;
-      border-radius: 16px;
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 24px 60px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.3);
-      animation: fadeUp .35s ease both;
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, .5),
+        0 12px 24px rgba(0, 0, 0, .3),
+        0 0 0 1px rgba(251, 191, 36, .15);
+      animation: fadeUp .4s ease both;
       position: relative;
       z-index: 1;
     }
 
-    /* Top accent bar */
+    /* Top accent bar — yellow */
     .login-card::before {
       content: '';
       display: block;
-      height: 4px;
-      background: linear-gradient(90deg, var(--navy) 0%, var(--accent-blue) 60%, var(--accent-sky) 100%);
+      height: 5px;
+      background: linear-gradient(90deg,
+        var(--yellow-dark) 0%,
+        var(--yellow-bright) 50%,
+        var(--yellow) 100%);
     }
 
     .login-header {
@@ -138,8 +159,8 @@
     }
 
     .login-input:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, .2);
     }
 
     .login-input.is-error {
@@ -195,39 +216,57 @@
 
     .login-remember input[type="checkbox"] {
       width: 14px; height: 14px;
-      accent-color: var(--accent-blue);
+      accent-color: var(--yellow-dark);
       cursor: pointer;
     }
 
     .login-forgot {
-      color: var(--accent-blue);
-      font-weight: 600;
+      color: var(--yellow-deep);
+      font-weight: 700;
       transition: color .15s;
     }
 
-    .login-forgot:hover { color: #1d4ed8; }
+    .login-forgot:hover { color: var(--navy); }
 
     .login-submit {
       width: 100%;
-      height: 46px;
-      background: var(--navy);
+      height: 48px;
+      background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
       color: white;
-      border: none;
+      border: 1.5px solid var(--navy);
       border-radius: var(--radius-md);
-      font-size: .9rem;
+      font-size: .92rem;
       font-weight: 700;
       font-family: var(--font-body);
       cursor: pointer;
-      transition: background .15s, transform .1s;
+      transition: all .2s;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       letter-spacing: .01em;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 4px 10px rgba(10, 31, 68, .25);
+      position: relative;
+      overflow: hidden;
     }
 
-    .login-submit:hover  { background: var(--navy-light); }
-    .login-submit:active { transform: scale(.99); }
+    .login-submit::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(251, 191, 36, .25), transparent);
+      transition: left .6s;
+    }
+
+    .login-submit:hover {
+      background: linear-gradient(180deg, var(--navy-hover) 0%, var(--navy-light) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 8px 16px rgba(10, 31, 68, .35);
+    }
+
+    .login-submit:hover::before { left: 100%; }
+    .login-submit:active { transform: translateY(0); }
 
     .login-submit svg { width: 16px; height: 16px; }
 
@@ -262,9 +301,9 @@
       letter-spacing: .04em;
     }
 
-    .login-sec-badge--sha { background: #eff6ff; color: var(--accent-blue); }
+    .login-sec-badge--sha { background: var(--navy-soft); color: var(--navy); }
     .login-sec-badge--aes { background: var(--success-bg); color: var(--success); }
-    .login-sec-badge--ra  { background: var(--warning-bg); color: var(--warning); }
+    .login-sec-badge--ra  { background: var(--yellow-tint); color: var(--yellow-deep); }
 
     /* Alert for lockout / general errors */
     .login-alert {
@@ -301,6 +340,12 @@
     </div>
     <div class="login-title">Academic Management Portal</div>
     <div class="login-subtitle">Philippine Academy of Sakya</div>
+    <div style="margin-top:14px;">
+      <button type="button" onclick="document.getElementById('aboutModal').style.display='flex'"
+              style="background:none;border:1px solid rgba(251,191,36,.4);color:var(--yellow);padding:.35rem .9rem;border-radius:999px;font-size:.74rem;font-weight:700;letter-spacing:.04em;cursor:pointer;text-transform:uppercase;">
+        About &amp; Security
+      </button>
+    </div>
   </div>
 
   {{-- Login Form --}}
@@ -317,9 +362,9 @@
       </div>
     @endif
 
-    <div class="mb-4 rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:.78rem;color:#1e40af;">
-        Multiple failed attempts will temporarily lock your account for 10 minutes.
-        If you can't sign in, use <a href="{{ route('password.request') }}" style="text-decoration:underline;font-weight:600;">Forgot Password</a>.
+    <div style="background:var(--yellow-tint);border:1px solid var(--yellow);border-left:4px solid var(--yellow-dark);border-radius:8px;padding:11px 14px;margin-bottom:18px;font-size:.78rem;color:var(--navy);line-height:1.5;">
+        <strong>Heads-up:</strong> Multiple failed attempts will temporarily lock your account for 10 minutes.
+        If you can't sign in, use <a href="{{ route('password.request') }}" style="text-decoration:underline;font-weight:700;color:var(--yellow-deep);">Forgot Password</a>.
     </div>
 
     <form method="POST" action="{{ route('login') }}" autocomplete="off">
@@ -423,6 +468,61 @@
     }
   }
 </script>
+
+{{-- ── About & Security Modal ────────────────────────────────────── --}}
+<div id="aboutModal"
+     style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:1000;align-items:center;justify-content:center;padding:20px;"
+     onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.4);">
+    <div style="padding:24px 28px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;border-radius:16px 16px 0 0;">
+      <h2 style="margin:0;font-size:1.25rem;font-weight:800;color:#0f172a;">About EncryptEd</h2>
+      <button type="button" onclick="document.getElementById('aboutModal').style.display='none'"
+              style="background:none;border:none;font-size:1.6rem;line-height:1;color:#94a3b8;cursor:pointer;">&times;</button>
+    </div>
+
+    <div style="padding:24px 28px;font-size:.9rem;line-height:1.65;color:#334155;">
+      <p style="margin:0 0 16px;">
+        <strong>EncryptEd</strong> is a secure, web-based academic management platform for the
+        Philippine Academy of Sakya. It manages the full student academic lifecycle — admission,
+        enrollment, grading, and reporting — while protecting sensitive data through multiple
+        layers of security.
+      </p>
+
+      <h3 style="font-size:.95rem;font-weight:800;color:#0f172a;margin:20px 0 10px;">Security Features</h3>
+      <ul style="margin:0 0 16px;padding-left:20px;display:flex;flex-direction:column;gap:8px;">
+        <li><strong>Password Protection.</strong> Passwords are hashed with bcrypt (cost 12) and unique salts. Plain-text passwords are never stored.</li>
+        <li><strong>Data Encryption at Rest.</strong> Sensitive personal information (contact details, addresses, and other PII) is encrypted with AES-256 before being saved to the database.</li>
+        <li><strong>Brute-Force Defense.</strong> Accounts lock for 10 minutes after 5 failed login attempts, with additional per-IP rate limiting.</li>
+        <li><strong>Tamper-Evident Audit Logs.</strong> Every sensitive action is recorded in an append-only audit trail chained with SHA-256, so any tampering is detectable.</li>
+        <li><strong>Threat Monitoring.</strong> The system actively detects and logs injection attempts, privilege-escalation attempts, and suspicious login activity.</li>
+        <li><strong>Session Security.</strong> Sessions expire after 30 minutes of inactivity; cookies use HttpOnly and SameSite protections.</li>
+      </ul>
+
+      <h3 style="font-size:.95rem;font-weight:800;color:#0f172a;margin:20px 0 10px;">RA 10173 — Data Privacy Act of 2012</h3>
+      <p style="margin:0 0 12px;">
+        EncryptEd is built on a <strong>Privacy-by-Design</strong> framework in adherence to
+        Republic Act No. 10173, the Data Privacy Act of 2012:
+      </p>
+      <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;">
+        <li><strong>Data Minimization.</strong> Only the data required for academic operations is collected and stored.</li>
+        <li><strong>Consent.</strong> Explicit consent is captured on the admission application before any applicant data is processed.</li>
+        <li><strong>Right of Access.</strong> Users can view the personal data the system holds about them through their profile and security settings.</li>
+        <li><strong>Right to Erasure.</strong> Archived records can be cryptographically shredded once the institutional retention period expires.</li>
+      </ul>
+
+      <p style="margin:20px 0 0;font-size:.8rem;color:#94a3b8;">
+        For data privacy concerns, contact the institution's Data Protection Officer through the school registrar.
+      </p>
+    </div>
+
+    <div style="padding:16px 28px;border-top:1px solid #e2e8f0;text-align:right;position:sticky;bottom:0;background:#fff;border-radius:0 0 16px 16px;">
+      <button type="button" onclick="document.getElementById('aboutModal').style.display='none'"
+              style="background:#1c3a6e;color:#fff;border:none;padding:.55rem 1.4rem;border-radius:8px;font-size:.875rem;font-weight:700;cursor:pointer;">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

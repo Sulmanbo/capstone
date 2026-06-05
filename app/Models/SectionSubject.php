@@ -24,7 +24,9 @@ class SectionSubject extends Model
         'subject_id',
         'faculty_id',
         'academic_year_id',
+        'classroom_id',
         'room',
+        'status',
         'schedule_days',
         'start_time',
         'end_time',
@@ -49,6 +51,11 @@ class SectionSubject extends Model
     public function faculty(): BelongsTo
     {
         return $this->belongsTo(User::class, 'faculty_id');
+    }
+
+    public function classroom(): BelongsTo
+    {
+        return $this->belongsTo(Classroom::class, 'classroom_id');
     }
 
     public function academicYear(): BelongsTo

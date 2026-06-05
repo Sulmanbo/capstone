@@ -2,25 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use App\Models\Notification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function index(): View
+    public function index()
     {
         $user = auth()->user();
-        $user->unreadNotifications()->update(['read_at' => now()]);
+        $notifications = $user->notifications()->recent()->paginate(30);
+        $unreadCount = $user->unreadNotifications()->count();
 
-        $notifications = $user->notifications()->latest()->paginate(30);
-
-        return view('notifications.index', compact('notifications'));
+        return view('notifications.index', compact('notifications', 'unreadCount'));
     }
 
-    public function markRead(string $id): RedirectResponse
+    /**
+     * AJAX endpoint: Get unread count for bell badge.
+     */
+    public function unreadCount()
     {
-        auth()->user()->notifications()->where('id', $id)->update(['read_at' => now()]);
+        $count = Auth::user()->unreadNotifications()->count();
+        return response()->json(['count' => $count]);
+    }
 
-        return redirect()->back();
+    /**
+     * Mark a single notification as read.
+     */
+    public function markRead(Notification $notification)
+    {
+        if ($notification->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $notification->markRead();
+
+        return back();
+    }
+
+    /**
+     * Mark all notifications as read.
+     */
+    public function markAllRead()
+    {
+        Auth::user()->unreadNotifications()->update(['read_at' => now()]);
+
+        return back()->with('success', 'All notifications marked as read.');
     }
 }
+

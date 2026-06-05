@@ -74,7 +74,7 @@
                        class="text-blue-600 hover:text-blue-800 font-medium">Edit</a>
                     <form method="POST" action="{{ route('admin.grading-quarters.destroy', $quarter) }}" 
                           class="inline-block ml-3"
-                          onsubmit="return confirm('Are you sure?');">
+                          data-confirm="Delete this grading quarter?" data-confirm-type="danger" data-confirm-title="Delete Quarter" data-confirm-ok="Delete">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="text-red-600 hover:text-red-800 font-medium">Delete</button>

@@ -33,13 +33,20 @@ class Subject extends Model
         'subject_id',
         'subject_code',
         'subject_name',
+        'year_level',
         'description',
         'credits',
         'status',
+        'ww_weight',
+        'pt_weight',
+        'qa_weight',
     ];
 
     protected $casts = [
-        'credits' => 'integer',
+        'credits'   => 'integer',
+        'ww_weight' => 'float',
+        'pt_weight' => 'float',
+        'qa_weight' => 'float',
     ];
 
     // ── Relationships ──────────────────────────────────────────────────────
@@ -99,6 +106,32 @@ class Subject extends Model
     public function getDisplayName(): string
     {
         return "{$this->subject_code} - {$this->subject_name}";
+    }
+
+    /**
+     * Return the effective grade weights for this subject.
+     * Falls back to the global academic config when custom weights are not set.
+     */
+    public function getGradeWeights(): array
+    {
+        $global = config('academic.grade_weights');
+
+        if ($this->ww_weight !== null && $this->pt_weight !== null && $this->qa_weight !== null) {
+            return [
+                'written_work'         => $this->ww_weight / 100,
+                'performance_task'     => $this->pt_weight / 100,
+                'quarterly_assessment' => $this->qa_weight / 100,
+            ];
+        }
+
+        return $global;
+    }
+
+    public function hasCustomWeights(): bool
+    {
+        return $this->ww_weight !== null
+            && $this->pt_weight !== null
+            && $this->qa_weight !== null;
     }
 
     /**

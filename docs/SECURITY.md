@@ -71,7 +71,7 @@ Plain-text columns (searchable, RBAC-protected): `first_name`, `last_name`, `use
 - `login_attempt_on_locked_account`
 - `injection_attempt`
 - `report_card_tamper_detected`
-- `rate_limit_exceeded` *(future — see roadmap)*
+- `rate_limit_exceeded` (emitted on every 429 throttle response — see `bootstrap/app.php`)
 
 ## RA 10173 (Data Privacy Act) Alignment
 

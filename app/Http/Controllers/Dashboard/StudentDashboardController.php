@@ -325,6 +325,73 @@ class StudentDashboardController extends Controller
         return view('dashboard.student-report-card', compact('user', 'studentInfo', 'reportCard'));
     }
 
+    /**
+     * Grade Archive (FRS Student Portal §c)
+     *
+     * Shows finalized/locked grades from ALL enrollments — every quarter of
+     * every academic year the student has been enrolled in. Optionally filtered
+     * by a chosen academic year via ?year= query param.
+     */
+    public function gradeArchive(Request $request)
+    {
+        $user        = auth()->user();
+        $enrollment  = $this->activeEnrollment($user->id);
+        $studentInfo = $this->studentInfo($user, $enrollment);
+
+        // Every enrollment this student has ever had
+        $enrollmentIds = Enrollment::where('student_id', $user->id)->pluck('id');
+
+        // All finalized/locked grades across those enrollments
+        $allGrades = Grade::whereIn('enrollment_id', $enrollmentIds)
+            ->whereIn('status', ['finalized', 'locked'])
+            ->whereNotNull('final_grade')
+            ->with(['sectionSubject.subject', 'gradingQuarter.academicYear', 'enrollment.academicYear'])
+            ->get();
+
+        // Build a list of academic years present in the archive (for the filter dropdown)
+        $years = $allGrades
+            ->map(fn($g) => $g->gradingQuarter?->academicYear ?? $g->enrollment?->academicYear)
+            ->filter()
+            ->unique('id')
+            ->sortByDesc('start_date')
+            ->values();
+
+        // Optional year filter
+        $selectedYearId = $request->input('year');
+        if ($selectedYearId) {
+            $allGrades = $allGrades->filter(function ($g) use ($selectedYearId) {
+                $yid = $g->gradingQuarter?->academic_year_id ?? $g->enrollment?->academic_year_id;
+                return (int) $yid === (int) $selectedYearId;
+            });
+        }
+
+        // Group: Year → Quarter → subject rows
+        $archive = $allGrades
+            ->groupBy(fn($g) => optional($g->gradingQuarter?->academicYear ?? $g->enrollment?->academicYear)->year_label ?? 'Unknown Year')
+            ->map(function ($yearGrades) {
+                return $yearGrades
+                    ->groupBy(fn($g) => $g->gradingQuarter?->quarter_name ?? 'Quarter')
+                    ->map(function ($quarterGrades) {
+                        return [
+                            'subjects' => $quarterGrades->map(fn($g) => [
+                                'name'    => $g->sectionSubject?->subject?->subject_name ?? '—',
+                                'faculty' => $g->sectionSubject?->faculty
+                                    ? $g->sectionSubject->faculty->last_name . ', ' . $g->sectionSubject->faculty->first_name
+                                    : 'TBA',
+                                'grade'   => number_format($g->final_grade, 0),
+                                'remark'  => $g->isPassing() ? 'Passed' : 'Failed',
+                                'passing' => $g->isPassing(),
+                            ])->values()->toArray(),
+                            'average' => number_format($quarterGrades->avg('final_grade') ?? 0, 2),
+                        ];
+                    });
+            });
+
+        return view('dashboard.student-grade-archive', compact(
+            'user', 'studentInfo', 'archive', 'years', 'selectedYearId'
+        ));
+    }
+
     public function schedule()
     {
         $user        = auth()->user();

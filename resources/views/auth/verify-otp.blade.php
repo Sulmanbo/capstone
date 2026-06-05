@@ -23,8 +23,8 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(37,99,235,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37,99,235,.04) 1px, transparent 1px);
+        linear-gradient(rgba(251, 191, 36, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(251, 191, 36, .04) 1px, transparent 1px);
       background-size: 40px 40px;
       pointer-events: none;
     }
@@ -42,8 +42,11 @@
     .otp-card::before {
       content: '';
       display: block;
-      height: 4px;
-      background: linear-gradient(90deg, var(--navy) 0%, var(--accent-blue) 60%, var(--accent-sky) 100%);
+      height: 5px;
+      background: linear-gradient(90deg,
+        var(--yellow-dark) 0%,
+        var(--yellow-bright) 50%,
+        var(--yellow) 100%);
     }
     .otp-header {
       padding: 28px 36px 20px;
@@ -52,14 +55,15 @@
       text-align: center;
     }
     .otp-header-icon {
-      width: 52px; height: 52px;
-      background: #eff6ff;
-      border: 2px solid #bfdbfe;
+      width: 56px; height: 56px;
+      background: var(--yellow-tint);
+      border: 2px solid var(--yellow);
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 14px;
+      box-shadow: 0 0 0 4px rgba(251, 191, 36, .15);
     }
-    .otp-header-icon svg { width: 24px; height: 24px; color: var(--accent-blue); }
+    .otp-header-icon svg { width: 26px; height: 26px; color: var(--yellow-deep); }
     .otp-title { font-size: 1.1rem; font-weight: 700; color: var(--navy); }
     .otp-subtitle { font-size: .78rem; color: var(--gray-400); margin-top: 4px; line-height: 1.5; }
     .otp-body { padding: 28px 36px 32px; }
@@ -85,8 +89,9 @@
       background: white;
     }
     .otp-digit:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, .25);
+      background: var(--yellow-pale);
     }
     .otp-digit.is-error { border-color: var(--danger); }
 
@@ -114,32 +119,37 @@
 
     .otp-submit {
       width: 100%;
-      height: 46px;
-      background: var(--navy);
+      height: 48px;
+      background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
       color: white;
-      border: none;
+      border: 1.5px solid var(--navy);
       border-radius: var(--radius-md);
-      font-size: .9rem;
+      font-size: .92rem;
       font-weight: 700;
       font-family: var(--font-body);
       cursor: pointer;
-      transition: background .15s;
+      transition: all .2s;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       margin-bottom: 14px;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 4px 10px rgba(10, 31, 68, .2);
     }
-    .otp-submit:hover { background: var(--navy-light); }
+    .otp-submit:hover {
+      background: linear-gradient(180deg, var(--navy-hover) 0%, var(--navy-light) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 8px 16px rgba(10, 31, 68, .3);
+    }
     .otp-submit svg { width: 16px; height: 16px; }
 
     .otp-resend {
       text-align: center;
-      font-size: .78rem;
-      color: var(--gray-400);
+      font-size: .8rem;
+      color: var(--gray-500);
     }
-    .otp-resend a { color: var(--accent-blue); font-weight: 600; }
-    .otp-resend a:hover { color: #1d4ed8; }
+    .otp-resend a { color: var(--yellow-deep); font-weight: 700; }
+    .otp-resend a:hover { color: var(--navy); }
 
     .otp-footer {
       padding: 12px 36px 16px;
@@ -186,6 +196,23 @@
 
     @if(session('status'))
       <div class="status-msg">{{ session('status') }}</div>
+    @endif
+
+    @if(session('dev_otp'))
+    <div style="background:#fff8e1;border:1.5px solid #f59e0b;border-radius:12px;padding:16px 18px;margin-bottom:20px;text-align:center;">
+      <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#92400e;margin-bottom:4px;">
+        Email delivery unavailable — use this code
+      </div>
+      <div style="font-size:.74rem;color:#78350f;margin-bottom:10px;">
+        Copy this OTP and enter it below to continue.
+      </div>
+      <div style="font-size:2.2rem;font-weight:900;font-family:monospace;letter-spacing:.35em;color:#1e293b;cursor:pointer;"
+           title="Click to copy"
+           onclick="navigator.clipboard.writeText('{{ session('dev_otp') }}').then(()=>this.style.color='#059669')">
+        {{ session('dev_otp') }}
+      </div>
+      <div style="font-size:.7rem;color:#a16207;margin-top:6px;">Tap the code to copy</div>
+    </div>
     @endif
 
     <form method="POST" action="{{ route('password.verify-otp.submit') }}" id="otp-form">
