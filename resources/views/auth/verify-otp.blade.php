@@ -199,16 +199,19 @@
     @endif
 
     @if(session('dev_otp'))
-    <div style="background:var(--yellow-tint);border:1.5px dashed var(--yellow-dark);border-radius:12px;padding:16px 18px;margin-bottom:20px;text-align:center;">
-      <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--yellow-deep);margin-bottom:8px;">
-        LOCAL DEV MODE &middot; OTP not emailed
+    <div style="background:#fff8e1;border:1.5px solid #f59e0b;border-radius:12px;padding:16px 18px;margin-bottom:20px;text-align:center;">
+      <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#92400e;margin-bottom:4px;">
+        Email delivery unavailable — use this code
       </div>
-      <div style="font-size:2.1rem;font-weight:900;font-family:var(--font-mono);letter-spacing:.3em;color:var(--navy);">
+      <div style="font-size:.74rem;color:#78350f;margin-bottom:10px;">
+        Copy this OTP and enter it below to continue.
+      </div>
+      <div style="font-size:2.2rem;font-weight:900;font-family:monospace;letter-spacing:.35em;color:#1e293b;cursor:pointer;"
+           title="Click to copy"
+           onclick="navigator.clipboard.writeText('{{ session('dev_otp') }}').then(()=>this.style.color='#059669')">
         {{ session('dev_otp') }}
       </div>
-      <div style="font-size:.72rem;color:var(--yellow-deep);margin-top:6px;font-weight:500;">
-        Configure MAIL_MAILER in .env for production
-      </div>
+      <div style="font-size:.7rem;color:#a16207;margin-top:6px;">Tap the code to copy</div>
     </div>
     @endif
 
