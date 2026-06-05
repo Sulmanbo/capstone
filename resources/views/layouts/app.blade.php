@@ -1608,6 +1608,51 @@
   @csrf
 </form>
 
+{{-- ══════════════════════════════════════════════════════
+     GLOBAL CONFIRM / ALERT MODAL — replaces confirm() & alert()
+═══════════════════════════════════════════════════════ --}}
+<div id="enc-confirm-modal" style="display:none;position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;">
+  <div id="enc-confirm-backdrop" style="position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);"></div>
+  <div id="enc-confirm-dialog" style="
+      position:relative;z-index:1;
+      background:#fff;border-radius:20px;
+      width:100%;max-width:420px;margin:0 16px;
+      box-shadow:0 24px 64px rgba(15,23,42,.18);
+      overflow:hidden;
+      transform:scale(.95) translateY(10px);
+      opacity:0;
+      transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .18s ease;">
+    <div id="enc-confirm-top" style="height:4px;background:linear-gradient(90deg,#7c3aed,#a78bfa);"></div>
+    <div style="padding:28px 26px 24px;">
+      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;">
+        <div id="enc-confirm-icon-wrap" style="width:46px;height:46px;border-radius:13px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg id="enc-confirm-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:22px;height:22px;color:#d97706;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+          </svg>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <h3 id="enc-confirm-title" style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 5px;"></h3>
+          <p id="enc-confirm-message" style="font-size:.875rem;color:#64748b;margin:0;line-height:1.55;"></p>
+        </div>
+      </div>
+      <div id="enc-confirm-actions" style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="enc-confirm-cancel" type="button"
+          style="padding:.6rem 1.1rem;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#374151;font-size:.875rem;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s;"
+          onmouseover="this.style.background='#f8fafc';this.style.borderColor='#cbd5e1'"
+          onmouseout="this.style.background='#fff';this.style.borderColor='#e2e8f0'">
+          Cancel
+        </button>
+        <button id="enc-confirm-ok" type="button"
+          style="padding:.6rem 1.25rem;border:none;border-radius:9px;background:#7c3aed;color:#fff;font-size:.875rem;font-weight:700;cursor:pointer;transition:background .15s;"
+          onmouseover="this.style.background='#6d28d9'"
+          onmouseout="this.style.background=encConfirmOkColor||'#7c3aed'">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   // ── Live clock ────────────────────────────────────────────────────────
   (function () {
@@ -1727,6 +1772,133 @@
   function _escListener(e) {
     if (e.key === 'Escape') closeLogoutModal();
   }
+
+  // ── Global confirm / alert modal ─────────────────────────────────────
+  let encConfirmOkColor = '#7c3aed';
+  let _encConfirmResolve = null;
+
+  function _encConfirmShow(message, opts) {
+    opts = opts || {};
+    const title       = opts.title       || 'Confirm Action';
+    const confirmText = opts.confirmText || 'Confirm';
+    const cancelText  = opts.cancelText  || null;
+    const type        = opts.type        || 'warning'; // warning | danger | info | success
+
+    const iconWrap = document.getElementById('enc-confirm-icon-wrap');
+    const icon     = document.getElementById('enc-confirm-icon');
+    const topBar   = document.getElementById('enc-confirm-top');
+    const okBtn    = document.getElementById('enc-confirm-ok');
+    const cancelBtn= document.getElementById('enc-confirm-cancel');
+
+    const themes = {
+      warning: { bg:'#fef3c7', color:'#d97706', bar:'linear-gradient(90deg,#f59e0b,#fbbf24)',
+        btnBg:'#f59e0b', btnHover:'#d97706',
+        icon:'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z' },
+      danger:  { bg:'#fee2e2', color:'#dc2626', bar:'linear-gradient(90deg,#ef4444,#f87171)',
+        btnBg:'#ef4444', btnHover:'#dc2626',
+        icon:'M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374L10.051 3.378c.866-1.5 3.032-1.5 3.898 0L21.303 16.126zM12 15.75h.007v.008H12v-.008z' },
+      info:    { bg:'#dbeafe', color:'#2563eb', bar:'linear-gradient(90deg,#3b82f6,#60a5fa)',
+        btnBg:'#3b82f6', btnHover:'#2563eb',
+        icon:'M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z' },
+      success: { bg:'#d1fae5', color:'#059669', bar:'linear-gradient(90deg,#10b981,#34d399)',
+        btnBg:'#10b981', btnHover:'#059669',
+        icon:'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    };
+    const t = themes[type] || themes.warning;
+
+    iconWrap.style.background = t.bg;
+    icon.style.color = t.color;
+    icon.querySelector('path').setAttribute('d', t.icon);
+    topBar.style.background = t.bar;
+    okBtn.textContent = confirmText;
+    okBtn.style.background = t.btnBg;
+    encConfirmOkColor = t.btnBg;
+    okBtn.onmouseover = function(){ this.style.background = t.btnHover; };
+    okBtn.onmouseout  = function(){ this.style.background = t.btnBg; };
+
+    if (cancelText) {
+      cancelBtn.textContent = cancelText;
+      cancelBtn.style.display = '';
+    } else {
+      cancelBtn.style.display = 'none';
+    }
+
+    document.getElementById('enc-confirm-title').textContent   = title;
+    document.getElementById('enc-confirm-message').textContent = message;
+
+    const modal  = document.getElementById('enc-confirm-modal');
+    const dialog = document.getElementById('enc-confirm-dialog');
+    modal.style.display = 'flex';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        dialog.style.transform = 'scale(1) translateY(0)';
+        dialog.style.opacity   = '1';
+      });
+    });
+  }
+
+  function _encConfirmClose(result) {
+    const modal  = document.getElementById('enc-confirm-modal');
+    const dialog = document.getElementById('enc-confirm-dialog');
+    dialog.style.transform = 'scale(.95) translateY(10px)';
+    dialog.style.opacity   = '0';
+    setTimeout(function () { modal.style.display = 'none'; }, 200);
+    if (_encConfirmResolve) { _encConfirmResolve(result); _encConfirmResolve = null; }
+  }
+
+  document.getElementById('enc-confirm-ok').addEventListener('click', function () { _encConfirmClose(true); });
+  document.getElementById('enc-confirm-cancel').addEventListener('click', function () { _encConfirmClose(false); });
+  document.getElementById('enc-confirm-backdrop').addEventListener('click', function () { _encConfirmClose(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.getElementById('enc-confirm-modal').style.display === 'flex') {
+      _encConfirmClose(false);
+    }
+  });
+
+  window.encConfirm = function (message, opts) {
+    return new Promise(function (resolve) {
+      _encConfirmResolve = resolve;
+      _encConfirmShow(message, opts);
+    });
+  };
+
+  window.encAlert = function (message, opts) {
+    opts = Object.assign({ type: 'info', title: 'Notice', confirmText: 'OK' }, opts || {});
+    opts.cancelText = null;
+    return window.encConfirm(message, opts);
+  };
+
+  // ── data-confirm interceptor — auto-wires any form/button ────────────
+  document.addEventListener('submit', function (e) {
+    const form = e.target;
+    const msg  = form.getAttribute('data-confirm');
+    if (!msg) return;
+    e.preventDefault();
+    const type  = form.getAttribute('data-confirm-type')  || 'warning';
+    const title = form.getAttribute('data-confirm-title') || 'Confirm Action';
+    const ok    = form.getAttribute('data-confirm-ok')    || 'Confirm';
+    window.encConfirm(msg, { type: type, title: title, confirmText: ok }).then(function (confirmed) {
+      if (confirmed) { form.removeAttribute('data-confirm'); form.submit(); }
+    });
+  }, true);
+
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('button[data-confirm], a[data-confirm]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const msg   = btn.getAttribute('data-confirm');
+    const type  = btn.getAttribute('data-confirm-type')  || 'danger';
+    const title = btn.getAttribute('data-confirm-title') || 'Confirm Action';
+    const ok    = btn.getAttribute('data-confirm-ok')    || 'Confirm';
+    window.encConfirm(msg, { type: type, title: title, confirmText: ok }).then(function (confirmed) {
+      if (confirmed) {
+        const formId = btn.getAttribute('form');
+        const form   = formId ? document.getElementById(formId) : btn.closest('form');
+        if (form) { form.removeAttribute('data-confirm'); form.submit(); }
+      }
+    });
+  }, true);
 </script>
 
 @stack('scripts')

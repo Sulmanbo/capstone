@@ -97,7 +97,7 @@
     </div>
   @else
   <form method="POST" action="{{ route('registrar.promotion.promote') }}"
-        onsubmit="return confirm('Confirm promotion of selected students? This action will update their grade levels and create new enrollment records.')">
+        data-confirm="Confirm promotion of selected students? This will update their grade levels and create new enrollment records." data-confirm-type="warning" data-confirm-title="Promote Students" data-confirm-ok="Promote">
     @csrf
     <input type="hidden" name="source_year_id"    value="{{ $selectedYear->id }}">
     <input type="hidden" name="source_section_id" value="{{ $selectedSection->id }}">

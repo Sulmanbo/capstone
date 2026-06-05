@@ -99,7 +99,7 @@
                        class="text-blue-600 hover:text-blue-800 font-medium">Edit</a>
                     <form method="POST" action="{{ route('admin.curriculum-mappings.destroy', $mapping) }}" 
                           class="inline-block ml-3"
-                          onsubmit="return confirm('Are you sure?');">
+                          data-confirm="Delete this curriculum mapping? This cannot be undone." data-confirm-type="danger" data-confirm-title="Delete Mapping" data-confirm-ok="Delete">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="text-red-600 hover:text-red-800 font-medium">Delete</button>

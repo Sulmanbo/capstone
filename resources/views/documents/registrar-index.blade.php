@@ -219,10 +219,14 @@ if (selectAll) {
   });
 }
 
-document.getElementById('bulk-form')?.addEventListener('submit', function (e) {
+document.getElementById('bulk-form')?.addEventListener('submit', async function (e) {
+  e.preventDefault();
   const checked = [...document.querySelectorAll('.row-check:checked')];
-  if (checked.length === 0) { e.preventDefault(); alert('Please select at least one request.'); return; }
-  if (!confirm('Update status for ' + checked.length + ' selected request(s)?')) e.preventDefault();
+  if (!checked.length) { await encAlert('Please select at least one request.', { title: 'No Selection' }); return; }
+  const ok = await encConfirm('Update status for ' + checked.length + ' selected request(s)?', {
+    title: 'Bulk Status Update', confirmText: 'Apply', type: 'info',
+  });
+  if (ok) this.submit();
 });
 </script>
 @endpush

@@ -190,11 +190,17 @@ if (lvAll) lvAll.addEventListener('change', function() {
   document.querySelectorAll('.lv-check').forEach(c => c.checked = this.checked);
   lvUpdate();
 });
-document.getElementById('lv-bulk-form')?.addEventListener('submit', function(e) {
+document.getElementById('lv-bulk-form')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
   const checked = [...document.querySelectorAll('.lv-check:checked')];
-  if (!checked.length) { e.preventDefault(); alert('Select at least one request.'); return; }
+  if (!checked.length) { await encAlert('Select at least one request.', { title: 'No Selection' }); return; }
   const action = this.querySelector('select[name=status]').value;
-  if (!confirm('Set ' + checked.length + ' request(s) to ' + action + '?')) e.preventDefault();
+  const ok = await encConfirm('Set ' + checked.length + ' request(s) to ' + action + '?', {
+    title: 'Bulk ' + (action === 'approved' ? 'Approve' : 'Reject'),
+    confirmText: action === 'approved' ? 'Approve All' : 'Reject All',
+    type: action === 'approved' ? 'success' : 'danger',
+  });
+  if (ok) this.submit();
 });
 </script>
 @endpush

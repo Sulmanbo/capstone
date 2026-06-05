@@ -204,7 +204,7 @@
                 @if($dropped)
                   {{-- Reinstate --}}
                   <form method="POST" action="{{ route('faculty.gradebook.reinstate', $ss) }}"
-                        onsubmit="return confirm('Reinstate this student? Their grades will become editable again.')">
+                        data-confirm="Reinstate this student? Their grades will become editable again." data-confirm-type="success" data-confirm-title="Reinstate Student" data-confirm-ok="Reinstate">
                     @csrf
                     <input type="hidden" name="enrollment_id" value="{{ $enrollment->id }}">
                     <button type="submit"
@@ -229,7 +229,7 @@
             <tr id="drop-form-{{ $enrollment->id }}" style="display:none;background:#fff7ed;">
               <td colspan="9" style="padding:12px 20px;">
                 <form method="POST" action="{{ route('faculty.gradebook.drop', $ss) }}"
-                      onsubmit="return confirm('Mark this student as dropped? This is logged and reversible.')">
+                      data-confirm="Mark this student as dropped? This is logged and reversible." data-confirm-type="warning" data-confirm-title="Drop Student" data-confirm-ok="Mark as Dropped">
                   @csrf
                   <input type="hidden" name="enrollment_id" value="{{ $enrollment->id }}">
                   <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
@@ -281,7 +281,7 @@
           @if(!$allSubmitted && $grades->isNotEmpty())
           <button type="submit" form="submit-form"
                   style="padding:.5rem 1.2rem;background:#0f172a;color:#fff;border:none;border-radius:9px;font-size:.84rem;font-weight:700;cursor:pointer;"
-                  onclick="return confirm('Submit all draft grades for registrar review? This cannot be undone.')">
+                  data-confirm="Submit all draft grades for registrar review? This cannot be undone." data-confirm-type="warning" data-confirm-title="Submit Grades" data-confirm-ok="Submit">
             Submit Grades
           </button>
           @endif

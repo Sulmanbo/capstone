@@ -196,7 +196,7 @@ textarea.form-control { resize:vertical; min-height:90px; }
               </button>
             </form>
             <form method="POST" action="{{ route('admin.announcements.destroy', $ann) }}" style="margin:0;"
-                  onsubmit="return confirm('Delete this announcement?')">
+                  data-confirm="Delete this announcement?" data-confirm-type="danger" data-confirm-title="Delete Announcement" data-confirm-ok="Delete">
               @csrf @method('DELETE')
               <button type="submit" class="ann-btn ann-btn--del">Delete</button>
             </form>

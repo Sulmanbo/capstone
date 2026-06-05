@@ -261,7 +261,7 @@
           <td style="text-align:right;white-space:nowrap;">
             <a href="{{ route('admin.schedules.edit', $sch) }}" class="sch-action-edit">Edit</a>
             <form action="{{ route('admin.schedules.destroy', $sch) }}" method="POST" style="display:inline;"
-                  onsubmit="return confirm('Delete this schedule?');">
+                  data-confirm="Delete this schedule?" data-confirm-type="danger" data-confirm-title="Delete Schedule" data-confirm-ok="Delete">
               @csrf @method('DELETE')
               <button type="submit" class="sch-action-del">Delete</button>
             </form>

@@ -264,7 +264,7 @@
             <span style="display:inline-block;margin-bottom:10px;font-size:.74rem;font-weight:700;padding:.25rem .7rem;border-radius:999px;background:rgba(16,185,129,.1);color:#059669;">{{ $report['status'] }}</span>
             <div class="sd-report-actions">
               <a href="{{ route('student.report-card') }}" class="enc-button enc-button--primary enc-button--sm">View Full Report</a>
-              <button type="button" class="enc-button enc-button--secondary enc-button--sm" onclick="alert('Download coming soon.')">Download PDF</button>
+              <button type="button" class="enc-button enc-button--secondary enc-button--sm" onclick="encAlert('PDF download will be available soon.', {title:'Coming Soon'})">Download PDF</button>
             </div>
           </div>
         </div>
@@ -388,7 +388,7 @@
 @push('scripts')
 <script>
 function downloadReportCard() {
-  alert('Report card download is coming soon.');
+  encAlert('Report card download will be available soon.', { title: 'Coming Soon' });
 }
 </script>
 @endpush

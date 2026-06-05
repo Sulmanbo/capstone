@@ -18,7 +18,7 @@
 
     @if($activeQuarter)
     <form method="POST" action="{{ route('registrar.grade-lock.lock-all') }}"
-          onsubmit="return confirm('Lock ALL finalized grades for the current quarter? This affects every section.')">
+          data-confirm="Lock ALL finalized grades for the current quarter? This affects every section and cannot be undone." data-confirm-type="danger" data-confirm-title="Global Lock All Grades" data-confirm-ok="Lock All">
       @csrf
       <button type="submit"
               style="padding:.5rem 1.25rem;background:#dc2626;color:#fff;border:none;border-radius:9px;font-size:.84rem;font-weight:700;cursor:pointer;">
@@ -75,7 +75,7 @@
             @csrf
             <button type="submit"
                     style="padding:.4rem .9rem;background:#059669;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;"
-                    onclick="return confirm('Approve this unlock request?')">
+                    data-confirm="Approve this unlock request?" data-confirm-type="success" data-confirm-title="Approve Unlock" data-confirm-ok="Approve">
               Approve
             </button>
           </form>
@@ -84,7 +84,7 @@
             <input type="hidden" name="review_notes" value="">
             <button type="submit"
                     style="padding:.4rem .9rem;background:#dc2626;color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;"
-                    onclick="return confirm('Deny this unlock request?')">
+                    data-confirm="Deny this unlock request?" data-confirm-type="danger" data-confirm-title="Deny Unlock" data-confirm-ok="Deny">
               Deny
             </button>
           </form>

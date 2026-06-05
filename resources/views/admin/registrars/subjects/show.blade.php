@@ -136,7 +136,7 @@
                 @if(!$subject->isUsedInCurriculum())
                 <form method="POST" action="{{ route('admin.subjects.destroy', $subject) }}" 
                       class="block"
-                      onsubmit="return confirm('Are you sure? This action cannot be undone.');">
+                      data-confirm="Delete this subject? This action cannot be undone." data-confirm-type="danger" data-confirm-title="Delete Subject" data-confirm-ok="Delete">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition">
