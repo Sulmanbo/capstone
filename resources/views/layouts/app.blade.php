@@ -1395,9 +1395,18 @@
   ═══════════════════════════════════ --}}
   <div class="enc-main">
 
+    {{-- Mobile overlay --}}
+    <div class="enc-sidebar-overlay" id="enc-sidebar-overlay"></div>
+
     {{-- Top Header --}}
     <header class="enc-header">
       <div class="enc-header__left">
+        {{-- Hamburger (mobile only) --}}
+        <button class="enc-hamburger" id="enc-hamburger" aria-label="Toggle menu" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+          </svg>
+        </button>
         <div class="enc-header__breadcrumb">
           <span>{{ auth()->user()->role_label ?? 'Portal' }}</span>
           <span class="enc-header__breadcrumb-sep">›</span>
@@ -1425,23 +1434,78 @@
 
         <div class="enc-header__time" id="enc-clock">--:-- --</div>
 
-        {{-- Notifications --}}
-        @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
-        <a href="{{ route('notifications.index') }}" class="enc-icon-btn" title="Notifications">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor" stroke-width="2" style="pointer-events:none;">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
-          </svg>
-          @if($unreadCount > 0)
-            <span style="position:absolute;top:-4px;right:-4px;background:#e11d48;color:#fff;
-              border-radius:999px;font-size:.6rem;font-weight:800;min-width:16px;height:16px;
-              display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;
-              pointer-events:none;">
-              {{ $unreadCount > 99 ? '99+' : $unreadCount }}
-            </span>
-          @endif
-        </a>
+        {{-- Notifications Dropdown --}}
+        @php
+          $unreadCount   = auth()->user()->unreadNotifications()->count();
+          $recentNotifs  = \App\Models\Notification::where('user_id', auth()->id())
+                             ->orderByDesc('created_at')->limit(8)->get();
+        @endphp
+        <div class="notif-wrap" id="notif-wrap">
+          <button type="button" class="enc-icon-btn" id="notif-bell" title="Notifications" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="2" style="pointer-events:none;">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
+            </svg>
+            @if($unreadCount > 0)
+              <span id="notif-badge" style="position:absolute;top:-4px;right:-4px;background:#e11d48;color:#fff;
+                border-radius:999px;font-size:.6rem;font-weight:800;min-width:16px;height:16px;
+                display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;
+                pointer-events:none;">
+                {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+              </span>
+            @else
+              <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e11d48;color:#fff;
+                border-radius:999px;font-size:.6rem;font-weight:800;min-width:16px;height:16px;
+                align-items:center;justify-content:center;padding:0 3px;line-height:1;pointer-events:none;"></span>
+            @endif
+          </button>
+
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-dropdown__head">
+              <span class="notif-dropdown__title">
+                Notifications
+                @if($unreadCount > 0)
+                  <span style="background:#e11d48;color:#fff;font-size:.65rem;padding:2px 6px;border-radius:99px;margin-left:6px;">{{ $unreadCount }}</span>
+                @endif
+              </span>
+              @if($unreadCount > 0)
+                <form method="POST" action="{{ route('notifications.mark-all-read') }}" style="margin:0;">
+                  @csrf
+                  <button type="submit" class="notif-mark-all-btn">Mark all read</button>
+                </form>
+              @endif
+            </div>
+            <div class="notif-list" id="notif-list">
+              @forelse($recentNotifs as $notif)
+                <div class="notif-item {{ $notif->isUnread() ? 'notif-item--unread' : '' }}">
+                  <div class="notif-dot {{ $notif->isUnread() ? '' : 'notif-dot--read' }}"></div>
+                  <div class="notif-body">
+                    <div class="notif-title">{{ $notif->title }}</div>
+                    <div class="notif-text">{{ $notif->body }}</div>
+                    <div class="notif-time">{{ $notif->created_at->diffForHumans() }}</div>
+                  </div>
+                  @if($notif->isUnread())
+                    <form method="POST" action="{{ route('notifications.mark-read', $notif) }}" style="margin:0;flex-shrink:0;">
+                      @csrf
+                      <button type="submit" title="Mark as read"
+                        style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:.75rem;padding:2px 4px;border-radius:4px;transition:color .12s;"
+                        onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#94a3b8'">✓</button>
+                    </form>
+                  @endif
+                </div>
+              @empty
+                <div class="notif-empty">
+                  <div style="font-size:1.8rem;margin-bottom:6px;">🔔</div>
+                  <div>No notifications yet</div>
+                </div>
+              @endforelse
+            </div>
+            <div class="notif-dropdown__foot">
+              <a href="{{ route('notifications.index') }}">View all notifications →</a>
+            </div>
+          </div>
+        </div>
 
         {{-- Logout --}}
         <button type="button" class="enc-icon-btn" title="Sign out" onclick="openLogoutModal()">
@@ -1559,33 +1623,80 @@
     setInterval(tick, 1000);
   })();
 
-  // ── Live notification badge ───────────────────────────────────────────
+  // ── Hamburger + sidebar toggle ────────────────────────────────────────
   (function () {
-    const notifLink = document.querySelector('a[href*="/notifications"]');
-    if (!notifLink) return;
+    const burger  = document.getElementById('enc-hamburger');
+    const sidebar = document.getElementById('enc-sidebar');
+    const overlay = document.getElementById('enc-sidebar-overlay');
+    if (!burger || !sidebar) return;
 
+    function openSidebar() {
+      sidebar.classList.add('open');
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    burger.addEventListener('click', function () {
+      sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+    });
+    overlay.addEventListener('click', closeSidebar);
+
+    // Close sidebar on nav link click (mobile UX)
+    sidebar.querySelectorAll('a').forEach(function (link) {
+      link.addEventListener('click', function () {
+        if (window.innerWidth <= 900) closeSidebar();
+      });
+    });
+  })();
+
+  // ── Notification dropdown ─────────────────────────────────────────────
+  (function () {
+    const bell     = document.getElementById('notif-bell');
+    const dropdown = document.getElementById('notif-dropdown');
+    const badge    = document.getElementById('notif-badge');
+    if (!bell || !dropdown) return;
+
+    bell.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const open = dropdown.classList.toggle('open');
+      bell.setAttribute('aria-expanded', open);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!document.getElementById('notif-wrap').contains(e.target)) {
+        dropdown.classList.remove('open');
+        bell.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        dropdown.classList.remove('open');
+        bell.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Poll unread count every 30s and update badge
     function updateBadge() {
       fetch('{{ route("notifications.unread-count") }}')
         .then(r => r.json())
         .then(data => {
-          let badge = notifLink.querySelector('span');
+          if (!badge) return;
           if (data.count > 0) {
-            if (!badge) {
-              badge = document.createElement('span');
-              badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#e11d48;color:#fff;border-radius:999px;font-size:.6rem;font-weight:800;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;pointer-events:none;';
-              notifLink.appendChild(badge);
-            }
             badge.textContent = data.count > 99 ? '99+' : data.count;
-          } else if (badge) {
-            badge.remove();
+            badge.style.display = 'flex';
+          } else {
+            badge.style.display = 'none';
           }
         })
         .catch(() => {});
     }
-
-    // Update every 15 seconds
-    setInterval(updateBadge, 15000);
-    // Update on focus (user might have read messages in another tab)
+    setInterval(updateBadge, 30000);
     window.addEventListener('focus', updateBadge);
   })();
 

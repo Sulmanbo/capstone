@@ -74,6 +74,23 @@
   @endif
 </form>
 
+{{-- Bulk Action Bar (pending only) --}}
+<div id="lv-bulk-bar" style="display:none;background:#7c3aed;color:#fff;border-radius:12px;padding:12px 18px;margin-bottom:16px;align-items:center;gap:12px;flex-wrap:wrap;">
+  <span id="lv-bulk-count" style="font-weight:700;font-size:.88rem;">0 selected</span>
+  <form method="POST" action="{{ route('leave.bulk-review') }}" id="lv-bulk-form" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0;">
+    @csrf
+    <input type="hidden" name="ids" id="lv-bulk-ids">
+    <select name="status" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;font-size:.84rem;font-weight:600;">
+      <option value="approved">✓ Approve All</option>
+      <option value="rejected">✕ Reject All</option>
+    </select>
+    <input type="text" name="admin_remarks" placeholder="Remarks (optional)…"
+      style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;font-size:.84rem;width:200px;">
+    <button type="submit" style="background:#fff;color:#7c3aed;border:none;border-radius:8px;padding:6px 18px;font-weight:800;cursor:pointer;font-size:.84rem;">Apply</button>
+  </form>
+  <button type="button" onclick="lvClearSel()" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.82rem;margin-left:auto;">✕ Clear</button>
+</div>
+
 <div class="lv-table-card">
   @if($requests->isEmpty())
     <div style="text-align:center;padding:50px;color:#94a3b8;">
@@ -85,6 +102,9 @@
       <table class="lv-table">
         <thead>
           <tr>
+            <th style="width:36px;padding-left:14px;">
+              <input type="checkbox" id="lv-select-all" title="Select pending" style="cursor:pointer;width:15px;height:15px;">
+            </th>
             <th>#</th>
             <th>Faculty</th>
             <th>Type</th>
@@ -99,6 +119,11 @@
         <tbody>
           @foreach($requests as $req)
           <tr>
+            <td style="padding-left:14px;">
+              @if($req->status === 'pending')
+                <input type="checkbox" class="lv-check" value="{{ $req->id }}" style="cursor:pointer;width:15px;height:15px;">
+              @endif
+            </td>
             <td style="color:#94a3b8;font-size:.75rem;">{{ $req->id }}</td>
             <td>
               <div style="font-weight:700;color:#1e293b;">{{ $req->faculty?->first_name }} {{ $req->faculty?->last_name }}</div>
@@ -141,4 +166,36 @@
     <div style="padding:16px 20px;">{{ $requests->links() }}</div>
   @endif
 </div>
+
+@push('scripts')
+<script>
+const lvBar   = document.getElementById('lv-bulk-bar');
+const lvCount = document.getElementById('lv-bulk-count');
+const lvIds   = document.getElementById('lv-bulk-ids');
+const lvAll   = document.getElementById('lv-select-all');
+
+function lvUpdate() {
+  const checked = [...document.querySelectorAll('.lv-check:checked')];
+  lvBar.style.display = checked.length > 0 ? 'flex' : 'none';
+  lvCount.textContent = checked.length + ' selected';
+  lvIds.value = checked.map(c => c.value).join(',');
+}
+function lvClearSel() {
+  document.querySelectorAll('.lv-check').forEach(c => c.checked = false);
+  if (lvAll) lvAll.checked = false;
+  lvUpdate();
+}
+document.querySelectorAll('.lv-check').forEach(c => c.addEventListener('change', lvUpdate));
+if (lvAll) lvAll.addEventListener('change', function() {
+  document.querySelectorAll('.lv-check').forEach(c => c.checked = this.checked);
+  lvUpdate();
+});
+document.getElementById('lv-bulk-form')?.addEventListener('submit', function(e) {
+  const checked = [...document.querySelectorAll('.lv-check:checked')];
+  if (!checked.length) { e.preventDefault(); alert('Select at least one request.'); return; }
+  const action = this.querySelector('select[name=status]').value;
+  if (!confirm('Set ' + checked.length + ' request(s) to ' + action + '?')) e.preventDefault();
+});
+</script>
+@endpush
 @endsection

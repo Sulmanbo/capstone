@@ -429,6 +429,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:registrar,admin')->group(function () {
         Route::get(  '/registrar/documents',                         [\App\Http\Controllers\DocumentRequestController::class, 'registrarIndex'])->name('documents.registrar.index');
         Route::patch('/registrar/documents/{documentRequest}/status',[\App\Http\Controllers\DocumentRequestController::class, 'updateStatus'])->name('documents.update-status');
+        Route::post( '/registrar/documents/bulk-update',             [\App\Http\Controllers\DocumentRequestController::class, 'bulkUpdate'])->name('documents.bulk-update');
     });
 
     // ── Faculty Leave Requests ────────────────────────────────────────────
@@ -437,8 +438,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/faculty/leave',       [\App\Http\Controllers\LeaveRequestController::class, 'facultyStore'])->name('leave.faculty.store');
     });
     Route::middleware('role:registrar,admin')->group(function () {
-        Route::get(  '/admin/leave',                     [\App\Http\Controllers\LeaveRequestController::class, 'adminIndex'])->name('leave.admin.index');
-        Route::patch('/admin/leave/{leaveRequest}/review',[\App\Http\Controllers\LeaveRequestController::class, 'review'])->name('leave.review');
+        Route::get(  '/admin/leave',                        [\App\Http\Controllers\LeaveRequestController::class, 'adminIndex'])->name('leave.admin.index');
+        Route::patch('/admin/leave/{leaveRequest}/review',  [\App\Http\Controllers\LeaveRequestController::class, 'review'])->name('leave.review');
+        Route::post( '/admin/leave/bulk-review',            [\App\Http\Controllers\LeaveRequestController::class, 'bulkReview'])->name('leave.bulk-review');
     });
 
     // ── Assignments ────────────────────────────────────────────────────────

@@ -81,4 +81,36 @@ class LeaveRequestController extends Controller
 
         return back()->with('success', 'Leave request ' . $data['status'] . '.');
     }
+
+    public function bulkReview(Request $request)
+    {
+        $data = $request->validate([
+            'ids'           => ['required', 'string'],
+            'status'        => ['required', 'in:approved,rejected'],
+            'admin_remarks' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $ids = array_filter(array_map('intval', explode(',', $data['ids'])));
+        if (empty($ids)) return back()->with('error', 'No requests selected.');
+
+        $requests = LeaveRequest::whereIn('id', $ids)->where('status', 'pending')->get();
+
+        foreach ($requests as $req) {
+            $req->update([
+                'status'        => $data['status'],
+                'admin_remarks' => $data['admin_remarks'] ?? null,
+                'reviewed_by'   => auth()->id(),
+                'reviewed_at'   => now(),
+            ]);
+            Notification::create([
+                'user_id' => $req->faculty_id,
+                'type'    => 'enrollment',
+                'title'   => 'Leave Request ' . ucfirst($data['status']),
+                'body'    => "Your {$req->type_label} request has been {$data['status']}." .
+                             ($data['admin_remarks'] ? " Remarks: {$data['admin_remarks']}" : ''),
+            ]);
+        }
+
+        return back()->with('success', "{$requests->count()} leave request(s) " . $data['status'] . '.');
+    }
 }

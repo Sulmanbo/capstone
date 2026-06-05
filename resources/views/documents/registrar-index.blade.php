@@ -20,6 +20,7 @@
 .doc-table td { padding: 12px 14px; font-size: .84rem; color: #334155; border-bottom: 1px solid #f8fafc; vertical-align: top; }
 .doc-table tr:last-child td { border-bottom: none; }
 .doc-table tr:hover td { background: #f8fafc; }
+.doc-table tr.selected td { background: #eff6ff; }
 
 .doc-status { display: inline-flex; padding: 3px 10px; border-radius: 99px; font-size: .72rem; font-weight: 700; }
 .doc-status--pending    { background: #fef3c7; color: #92400e; }
@@ -31,6 +32,13 @@
 .doc-update-form select { padding: 5px 8px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: .8rem; }
 .doc-update-form input { padding: 5px 8px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: .8rem; width: 160px; }
 .doc-update-form button { background: #0f172a; color: #fff; border: none; border-radius: 7px; padding: 5px 12px; font-size: .78rem; font-weight: 700; cursor: pointer; }
+
+.bulk-bar { background: #1e40af; color: #fff; border-radius: 12px; padding: 12px 18px; margin-bottom: 16px; display: none; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bulk-bar.active { display: flex; }
+.bulk-bar select,.bulk-bar input { padding: 6px 10px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,.4); background: rgba(255,255,255,.15); color: #fff; font-size: .84rem; font-weight: 600; }
+.bulk-bar input::placeholder { color: rgba(255,255,255,.6); }
+.bulk-bar .bulk-apply-btn { background: #fff; color: #1e40af; border: none; border-radius: 8px; padding: 6px 18px; font-weight: 800; cursor: pointer; font-size: .84rem; }
+.bulk-bar .bulk-clear-btn { background: rgba(255,255,255,.15); color: #fff; border: none; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: .82rem; margin-left: auto; }
 </style>
 @endpush
 
@@ -80,6 +88,24 @@
   @endif
 </form>
 
+{{-- Bulk Action Bar --}}
+<div class="bulk-bar" id="bulk-bar">
+  <span id="bulk-count" style="font-weight:700;font-size:.88rem;">0 selected</span>
+  <form method="POST" action="{{ route('documents.bulk-update') }}" id="bulk-form" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0;">
+    @csrf
+    <input type="hidden" name="ids" id="bulk-ids">
+    <select name="status">
+      <option value="processing">→ Processing</option>
+      <option value="ready">→ Ready for Pickup</option>
+      <option value="released">→ Released</option>
+      <option value="rejected">→ Rejected</option>
+    </select>
+    <input type="text" name="remarks" placeholder="Bulk remarks (optional)…" style="width:200px;">
+    <button type="submit" class="bulk-apply-btn">Apply to Selected</button>
+  </form>
+  <button type="button" onclick="clearSelection()" class="bulk-clear-btn">✕ Clear</button>
+</div>
+
 {{-- Table --}}
 <div class="doc-table-card">
   @if($requests->isEmpty())
@@ -89,9 +115,12 @@
     </div>
   @else
     <div style="overflow-x:auto;">
-      <table class="doc-table">
+      <table class="doc-table" id="doc-table">
         <thead>
           <tr>
+            <th style="width:36px;padding-left:16px;">
+              <input type="checkbox" id="select-all" title="Select all" style="cursor:pointer;width:15px;height:15px;">
+            </th>
             <th>#</th>
             <th>Student</th>
             <th>Document</th>
@@ -99,22 +128,27 @@
             <th>Purpose</th>
             <th>Status</th>
             <th>Submitted</th>
-            <th>Update Status</th>
+            <th>Update</th>
           </tr>
         </thead>
         <tbody>
           @foreach($requests as $req)
-          <tr>
-            <td style="color:#94a3b8;font-size:.78rem;">{{ $req->id }}</td>
+          <tr id="row-{{ $req->id }}">
+            <td style="padding-left:16px;">
+              @if(!in_array($req->status, ['released']))
+                <input type="checkbox" class="row-check" value="{{ $req->id }}" style="cursor:pointer;width:15px;height:15px;">
+              @endif
+            </td>
+            <td style="color:#94a3b8;font-size:.75rem;">{{ $req->id }}</td>
             <td>
               <div style="font-weight:700;color:#1e293b;">{{ $req->student?->first_name }} {{ $req->student?->last_name }}</div>
               <div style="font-size:.75rem;color:#64748b;">LRN: {{ $req->student?->lrn ?? 'N/A' }}</div>
             </td>
             <td style="font-weight:600;">{{ $req->document_label }}</td>
             <td>{{ $req->copies }}</td>
-            <td style="max-width:180px;font-size:.8rem;color:#64748b;" title="{{ $req->purpose }}">{{ Str::limit($req->purpose, 60) }}</td>
+            <td style="max-width:160px;font-size:.8rem;color:#64748b;" title="{{ $req->purpose }}">{{ Str::limit($req->purpose, 55) }}</td>
             <td><span class="doc-status doc-status--{{ $req->status }}">{{ ucfirst($req->status) }}</span></td>
-            <td style="color:#94a3b8;font-size:.78rem;">{{ $req->created_at->format('M d, Y') }}</td>
+            <td style="color:#94a3b8;font-size:.78rem;white-space:nowrap;">{{ $req->created_at->format('M d, Y') }}</td>
             <td>
               @if(!in_array($req->status, ['released']))
               <form method="POST" action="{{ route('documents.update-status', $req) }}" class="doc-update-form" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -129,7 +163,7 @@
               </form>
               @else
                 <span style="font-size:.78rem;color:#10b981;font-weight:700;">Released</span>
-                @if($req->released_at)<div style="font-size:.72rem;color:#94a3b8;">{{ $req->released_at->format('M d, Y') }}</div>@endif
+                @if($req->released_at)<div style="font-size:.72rem;color:#94a3b8;white-space:nowrap;">{{ $req->released_at->format('M d, Y') }}</div>@endif
               @endif
             </td>
           </tr>
@@ -137,7 +171,59 @@
         </tbody>
       </table>
     </div>
-    <div style="padding:16px 20px;">{{ $requests->links() }}</div>
+    <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <span style="font-size:.82rem;color:#64748b;">Showing {{ $requests->firstItem() }}–{{ $requests->lastItem() }} of {{ $requests->total() }}</span>
+      {{ $requests->links() }}
+    </div>
   @endif
 </div>
+
+@push('scripts')
+<script>
+const bulkBar   = document.getElementById('bulk-bar');
+const bulkCount = document.getElementById('bulk-count');
+const bulkIds   = document.getElementById('bulk-ids');
+const selectAll = document.getElementById('select-all');
+
+function updateBulkBar() {
+  const checked = [...document.querySelectorAll('.row-check:checked')];
+  checked.length > 0 ? bulkBar.classList.add('active') : bulkBar.classList.remove('active');
+  bulkCount.textContent = checked.length + ' selected';
+  bulkIds.value = checked.map(c => c.value).join(',');
+
+  // Highlight selected rows
+  document.querySelectorAll('.row-check').forEach(c => {
+    c.closest('tr').classList.toggle('selected', c.checked);
+  });
+}
+
+function clearSelection() {
+  document.querySelectorAll('.row-check').forEach(c => c.checked = false);
+  if (selectAll) selectAll.checked = false;
+  updateBulkBar();
+}
+
+document.querySelectorAll('.row-check').forEach(c => c.addEventListener('change', function() {
+  updateBulkBar();
+  // Sync select-all state
+  const all  = document.querySelectorAll('.row-check').length;
+  const chkd = document.querySelectorAll('.row-check:checked').length;
+  if (selectAll) selectAll.indeterminate = chkd > 0 && chkd < all;
+  if (selectAll) selectAll.checked = chkd === all && all > 0;
+}));
+
+if (selectAll) {
+  selectAll.addEventListener('change', function () {
+    document.querySelectorAll('.row-check').forEach(c => c.checked = this.checked);
+    updateBulkBar();
+  });
+}
+
+document.getElementById('bulk-form')?.addEventListener('submit', function (e) {
+  const checked = [...document.querySelectorAll('.row-check:checked')];
+  if (checked.length === 0) { e.preventDefault(); alert('Please select at least one request.'); return; }
+  if (!confirm('Update status for ' + checked.length + ' selected request(s)?')) e.preventDefault();
+});
+</script>
+@endpush
 @endsection

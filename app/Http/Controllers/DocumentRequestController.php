@@ -84,4 +84,39 @@ class DocumentRequestController extends Controller
 
         return back()->with('success', 'Request status updated.');
     }
+
+    public function bulkUpdate(Request $request)
+    {
+        $data = $request->validate([
+            'ids'     => ['required', 'string'],
+            'status'  => ['required', 'in:processing,ready,released,rejected'],
+            'remarks' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $ids = array_filter(array_map('intval', explode(',', $data['ids'])));
+        if (empty($ids)) return back()->with('error', 'No requests selected.');
+
+        $requests = DocumentRequest::whereIn('id', $ids)->whereNotIn('status', ['released'])->get();
+
+        $update = ['status' => $data['status'], 'remarks' => $data['remarks'] ?? null];
+        if (in_array($data['status'], ['processing', 'ready', 'rejected'])) {
+            $update['processed_by'] = auth()->id();
+            $update['processed_at'] = now();
+        }
+        if ($data['status'] === 'released') {
+            $update['released_at'] = now();
+        }
+
+        foreach ($requests as $req) {
+            $req->update($update);
+            \App\Models\Notification::create([
+                'user_id' => $req->student_id,
+                'type'    => 'enrollment',
+                'title'   => 'Document Request Update',
+                'body'    => "Your {$req->document_label} is now: " . ucfirst($data['status']),
+            ]);
+        }
+
+        return back()->with('success', "Updated {$requests->count()} document request(s) to " . ucfirst($data['status']) . '.');
+    }
 }
