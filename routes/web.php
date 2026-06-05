@@ -85,8 +85,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/security-settings', fn() => 'Security Settings — coming soon')->name('security-settings');
-    Route::get('/grades', fn() => 'Grades & Records — coming soon')->name('grades.index');
+    Route::get('/security-settings', [\App\Http\Controllers\Settings\AdminSettingsController::class, 'index'])->name('security-settings');
+    Route::get('/grades', [\App\Http\Controllers\Admin\AdminGradesController::class, 'index'])->name('grades.index');
 
     // ── User Management ───────────────────────────────────────────────────
     Route::prefix('users')->name('users.')->group(function () {

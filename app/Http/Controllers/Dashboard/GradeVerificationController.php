@@ -63,7 +63,7 @@ class GradeVerificationController extends Controller
             $stats['pending_review'] = $stats['total_submitted'];
         }
 
-        return view('dashboard.registrar-grade-verification', compact(
+        return view('dashboard.registrar-grades', compact(
             'submittedGrades',
             'activeYear',
             'activeQuarter',
