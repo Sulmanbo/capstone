@@ -415,4 +415,53 @@ Route::middleware(['auth'])->group(function () {
         Route::get(  '/complaints/manage',              [\App\Http\Controllers\GradeComplaintController::class, 'manage'])  ->name('complaints.manage');
         Route::patch('/complaints/{complaint}/respond', [\App\Http\Controllers\GradeComplaintController::class, 'respond']) ->name('complaints.respond');
     });
+
+    // ── School Calendar ───────────────────────────────────────────────────
+    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'index'])->name('calendar.index');
+    Route::post('/calendar', [\App\Http\Controllers\CalendarController::class, 'store'])->name('calendar.store')->middleware('role:registrar,admin');
+    Route::delete('/calendar/{calendarEvent}', [\App\Http\Controllers\CalendarController::class, 'destroy'])->name('calendar.destroy')->middleware('role:registrar,admin');
+
+    // ── Document Requests ─────────────────────────────────────────────────
+    Route::middleware('role:student')->group(function () {
+        Route::get( '/documents',       [\App\Http\Controllers\DocumentRequestController::class, 'studentIndex'])->name('documents.student.index');
+        Route::post('/documents',       [\App\Http\Controllers\DocumentRequestController::class, 'studentStore'])->name('documents.student.store');
+    });
+    Route::middleware('role:registrar,admin')->group(function () {
+        Route::get(  '/registrar/documents',                         [\App\Http\Controllers\DocumentRequestController::class, 'registrarIndex'])->name('documents.registrar.index');
+        Route::patch('/registrar/documents/{documentRequest}/status',[\App\Http\Controllers\DocumentRequestController::class, 'updateStatus'])->name('documents.update-status');
+    });
+
+    // ── Faculty Leave Requests ────────────────────────────────────────────
+    Route::middleware('role:faculty')->group(function () {
+        Route::get( '/faculty/leave',       [\App\Http\Controllers\LeaveRequestController::class, 'facultyIndex'])->name('leave.faculty.index');
+        Route::post('/faculty/leave',       [\App\Http\Controllers\LeaveRequestController::class, 'facultyStore'])->name('leave.faculty.store');
+    });
+    Route::middleware('role:registrar,admin')->group(function () {
+        Route::get(  '/admin/leave',                     [\App\Http\Controllers\LeaveRequestController::class, 'adminIndex'])->name('leave.admin.index');
+        Route::patch('/admin/leave/{leaveRequest}/review',[\App\Http\Controllers\LeaveRequestController::class, 'review'])->name('leave.review');
+    });
+
+    // ── Assignments ────────────────────────────────────────────────────────
+    Route::middleware('role:faculty')->group(function () {
+        Route::get( '/faculty/assignments',              [\App\Http\Controllers\AssignmentController::class, 'facultyIndex'])->name('assignments.faculty.index');
+        Route::post('/faculty/assignments',              [\App\Http\Controllers\AssignmentController::class, 'facultyStore'])->name('assignments.faculty.store');
+        Route::get( '/faculty/assignments/{assignment}', [\App\Http\Controllers\AssignmentController::class, 'facultyShow'])->name('assignments.faculty.show');
+        Route::patch('/faculty/assignments/{assignment}/publish', [\App\Http\Controllers\AssignmentController::class, 'publish'])->name('assignments.publish');
+        Route::patch('/faculty/assignments/submissions/{submission}/grade', [\App\Http\Controllers\AssignmentController::class, 'gradeSubmission'])->name('assignments.grade');
+    });
+    Route::middleware('role:student')->group(function () {
+        Route::get( '/student/assignments',                     [\App\Http\Controllers\AssignmentController::class, 'studentIndex'])->name('assignments.student.index');
+        Route::post('/student/assignments/{assignment}/submit', [\App\Http\Controllers\AssignmentController::class, 'studentSubmit'])->name('assignments.student.submit');
+    });
+
+    // ── Analytics Dashboard ────────────────────────────────────────────────
+    Route::middleware('role:registrar,admin')->get('/analytics', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
+
+    // ── DepEd SF Forms ────────────────────────────────────────────────────
+    Route::middleware('role:registrar,admin')->prefix('sf-forms')->name('sf.')->group(function () {
+        Route::get('/sf1',  [\App\Http\Controllers\SFFormController::class, 'sf1'])->name('sf1');
+        Route::get('/sf2',  [\App\Http\Controllers\SFFormController::class, 'sf2'])->name('sf2');
+        Route::get('/sf9',  [\App\Http\Controllers\SFFormController::class, 'sf9'])->name('sf9');
+        Route::get('/sf10', [\App\Http\Controllers\SFFormController::class, 'sf10'])->name('sf10');
+    });
 });

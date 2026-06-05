@@ -116,7 +116,7 @@ class GradeVerificationController extends Controller
                 'user_id' => $student->id,
                 'type' => 'grade_submitted',
                 'title' => 'Grade Verified',
-                'body' => "Your {$grade->sectionSubject?->subject?->subject_name ?? 'grade'} has been verified and finalized.",
+                'body' => "Your " . ($grade->sectionSubject?->subject?->subject_name ?? 'grade') . " has been verified and finalized.",
             ]);
         }
 
@@ -203,7 +203,7 @@ class GradeVerificationController extends Controller
                 'user_id' => $student->id,
                 'type' => 'grade_verified',
                 'title' => 'Grade Locked',
-                'body' => "Your {$grade->sectionSubject?->subject?->subject_name ?? 'grade'} is now finalized and locked.",
+                'body' => "Your " . ($grade->sectionSubject?->subject?->subject_name ?? 'grade') . " is now finalized and locked.",
             ]);
         }
 

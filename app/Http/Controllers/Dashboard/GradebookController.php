@@ -169,7 +169,7 @@ class GradebookController extends Controller
                     'user_id' => $student->id,
                     'type' => 'grade_submitted',
                     'title' => 'Grade Submitted for Review',
-                    'body' => "Your {$ss->subject?->subject_name ?? 'grade'} has been submitted for registrar verification.",
+                    'body' => "Your " . ($ss->subject?->subject_name ?? 'grade') . " has been submitted for registrar verification.",
                 ]);
             }
         }
