@@ -262,7 +262,7 @@
       <div class="fp-title">Forgot Password</div>
     </div>
     <div class="fp-subtitle">
-      Enter your institutional email address and we'll send you a
+      Enter your personal email address and we'll send you a
       password reset link if an account exists.
     </div>
   </div>
@@ -289,7 +289,7 @@
 
       <div class="fp-form-group">
         <label class="fp-label" for="email">
-          Institutional Email Address
+          Personal Email Address
         </label>
         <input
           type="email"
@@ -297,7 +297,7 @@
           name="email"
           value="{{ old('email') }}"
           class="fp-input {{ $errors->has('email') ? 'is-error' : '' }}"
-          placeholder="yourname@institution.edu.ph"
+          placeholder="yourname@gmail.com"
           autocomplete="email"
           autofocus>
         @error('email')
